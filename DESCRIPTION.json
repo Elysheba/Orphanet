@@ -1,0 +1,25 @@
+{
+	"name": "Orphanet",
+	"title": "Data extracted from the Orphanet database",
+	"description": "Orphanet is the reference portal for information on rare diseases and orphan drugs, for all audiences. The aim is to help improve the diagnosis, care and treatment of patients with rare diseases.",
+	"reference URL": "https://monarchinitiative.org/",
+	"version": "0.1",
+	"source files": [
+	    	{
+			"name":"ordo_orphanet.owl.zip",
+			"URL template":"http://www.orphadata.org/data/ORDO/ordo_orphanet.owl.zip",
+			"remote update frequency": {
+				"value": ,
+				"units": "1/day"
+			}
+		},
+	    	{
+			"name":"ORDO_releaseNotes2.5.txt",
+			"URL template":"http://www.orphadata.org/data/ORDO/ORDO_releaseNotes2.5.txt",
+			"remote update frequency": {
+				"value": ,
+				"units": "1/day"
+			}
+		}	    
+	]
+}

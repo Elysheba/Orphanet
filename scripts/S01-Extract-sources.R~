@@ -1,0 +1,70 @@
+setwd("~/Shared/Data-Science/Data-Source-Model-Repository/Orphanet-WIP/scripts/")
+
+
+####################################
+## ROLS
+## Use rols package from OLS EBI to get parent and label information. It does not always contain 
+## Synonyms or definition, therefore we will get this information from the converted .json file.
+OAlibrary(rols)
+
+ont <- Ontology("ordo")
+ontTerms <- terms(ont)
+ontId <- termId(ontTerms)
+ontLabel <- lapply(ontTerms,
+                   function(oid){
+                     termLabel(oid)
+                   })
+ontParents <- lapply(ontTerms,
+                     function(oid){
+                       parents(oid)
+                     })
+
+save(ontId,ontParents,ontLabel,ontTerms, file = "../sources/orphanetOLS.rda")
+
+load("../sources/orphanet.rda")
+OLSparse <- lapply(ontId,
+                   function(oid){
+                     ifelse(is.null(oid), 
+                            return(NULL), 
+                            return(data.frame(
+                              id = oid,
+                              label = ontLabel[[oid]],
+                              parents = paste(as(ontParents[[oid]], "data.frame")$id,collapse = ", ")
+                            ))
+                     )
+                   })
+
+############################
+## JSON file
+library(RJSONIO)
+source("../../00-Utils/downloadSourceFiles.R")
+
+desc <- readJSONStream("../DESCRIPTION.json")
+
+sourceFiles <- desc$"source files"
+urls <- unlist(lapply(
+  sourceFiles,
+  function(sf){
+    toRet <- sf$"URL template"
+    names(toRet) <- sf$"name"
+    return(toRet)
+  }
+))
+srcDir <- "../sources"
+
+downloadSourceFiles(urls, srcDir)
+if(!file.exists("../sources/ordo_orphanet.owl")){
+  unzip(zipfile = file.path(srcDir,"ordo_orphanet.owl.zip"), exdir = srcDir, overwrite = TRUE)
+}
+
+## system(paste0("robot convert --input ",srcDir," ordo_orphanet.owl --output ",srcDir," ordo_orphanet.json"))
+ont.json <- jsonlite::fromJSON(txt = "../sources/ordo_orphanet.json")
+ontJsonId <- data.frame(id = ont.json$graphs$nodes[[1]]$id,
+                        Xref = paste(unlist(ont.json$graphs$nodes[[1]]$meta$xrefs),collapse = ", "),
+                        name = paste(unlist(ont.json$graphs$nodes[[1]]$meta$basicPropertyValues$val),collapse = ", "),
+                        label = paste(unlist(ont.json$graphs$nodes[[1]]$lbl),collapse = ", "))
+
+head(ontJsonId)
+
+ont
+
