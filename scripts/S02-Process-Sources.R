@@ -71,8 +71,9 @@ crossId$DB1 <- gsub(":.*","",crossId$id1)
 
 ######################################
 ## entryId
-entryId <- crossId[!duplicated(crossId$id1),c("DB1","id1")]
-names(entryId) <- c("DB","id")
+entryId <- nodesJson["id"]
+entryId$DB <- gsub(":.*","",entryId$id)
+entryId <- entryId[,c("DB","id")]
 entryId$definition <- nodesJson$def[match(entryId$id,nodesJson$id)]
 
 ######################################
@@ -91,7 +92,7 @@ idNames$canonical <- ifelse(idNames$name %in% lbl$label, TRUE, FALSE)
 
 ######################################
 ## parentId
-parentId <- edgesJson[-which(edgesJson$obj == "http://www.orpha.net/ORDO/ObsoleteClass"),c("sub","obj")]
+parentId <- edgesJson[grep("http://www.orpha.net/ORDO/ObsoleteClass", x = edgesJson$obj, invert = T),c("sub","obj")]
 names(parentId) <- c("id","parent")
 parentId$DB <- gsub(":.*","",parentId$id)
 parentId$pDB <- gsub(":.*","",parentId$parent)
