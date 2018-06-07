@@ -1,0 +1,757 @@
+> source('~/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/scripts/S02-Process-Sources.R', echo=TRUE)
+
+> rm(list = ls())
+
+> gc()
+          used (Mb) gc trigger  (Mb)  max used   (Mb)
+Ncells 1448095 77.4    5769619 308.2   9348990  499.3
+Vcells 6729740 51.4  103708208 791.3 210901513 1609.1
+
+> setwd("~/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/scripts/")
+
+> library(XML)
+
+> library(parallel)
+
+> library(jsonlite)
+
+> library(data.table)
+
+> library(tidyjson)
+
+> ##
+> mc.cores <- 55
+
+> sdir <- "../sources"
+
+> ddir <- "../data"
+
+> ###############################################################################@
+> ## Source information ----
+> #################################### .... [TRUNCATED] 
+
+> Orphanet_sourceFiles <- sfi[which(sfi$inUse), c("url", "current")]
+
+> ###############################################################################@
+> ## Data from ordo_orphanet_owl
+> ################################ .... [TRUNCATED] 
+
+> readJson <- jsonlite::fromJSON(txt = "../sources/ordo_orphanet.json")
+
+> propJson <- do.call(rbind,
++                     lapply(1:nrow(readJson$graphs$nodes[[1]]),
++                            function(i){
++              .... [TRUNCATED] 
+
+> checkJson <- unique(unlist(lapply(readJson$graphs$nodes[[1]]$meta$basicPropertyValues,function(x) x$pred)))
+
+> checkJson
+[1] "http://www.ebi.ac.uk/efo/alternative_term"        "http://www.ebi.ac.uk/efo/definition_citation"    
+[3] "http://www.ebi.ac.uk/efo/definition"              "http://www.orpha.net/ORDO/Orphanet_#symbol"      
+[5] "http://www.ebi.ac.uk/efo/reason_for_obsolescence"
+
+> checkJson <- do.call(rbind,lapply(readJson$graphs$nodes[[1]]$meta$basicPropertyValues,function(x) x))
+
+> table(checkJson$val[grep("\\bdefinition_citation\\b",checkJson$pred)])
+
+orphanet 
+    4261 
+
+> ###########################################
+> ## nodes (id, def, name, xref, label)
+> nodesJson <- lapply(1:nrow(readJson$graphs$nodes[[1]]),
++      .... [TRUNCATED] 
+
+> id <- do.call(rbind,lapply(nodesJson,function(x){x$id} ))
+
+> xref <- do.call(rbind,lapply(nodesJson,function(x) x$xref))
+
+> syn <- do.call(rbind,lapply(nodesJson,function(x) x$syn))
+
+> ## edges (parents)
+> edgesJson <- readJson$graphs$edges[[1]]
+
+> edgesJson <- edgesJson[which(edgesJson$pred %in% c("is_a")),]
+
+> edgesJson <- as.data.frame(apply(edgesJson,2,function(x) gsub(".*ORDO/Orphanet_","ORPHA:",x)), 
++                            stringsAsFactors = FALS .... [TRUNCATED] 
+
+> dim(edgesJson)
+[1] 16350     3
+
+> getDescendants <- function(sp){
++   direct <- edgesJson[which(edgesJson$obj==sp),"sub"]
++   descendants <- direct
++   level <- 0
++   dLev <- c()
++   .... [TRUNCATED] 
+
+> ## Not only disease in Orphanet, also genes, etc. Keep only child terms of "phenome" = Orphanet_C001, see https://www.ebi.ac.uk/ols/ontologies/ordo
+ .... [TRUNCATED] 
+
+> lapply(disease,length)
+$descendants
+[1] 9075
+
+$level
+[1] 1
+
+
+> dim(edgesJson)
+[1] 16350     3
+
+> unique(grep("http",edgesJson$obj[edgesJson$sub %in% disease$descendants],value = T))
+character(0)
+
+> # edgesJson <- edgesJson[grep("http",edgesJson$obj,invert = T),]
+> # dim(edgesJson)
+> 
+> ######################################
+> ## crossId
+> cross .... [TRUNCATED] 
+
+> head(crossId)
+            id            Xref
+val1 ORPHA:124   UMLS:C2931850
+val2 ORPHA:124    ICD-10:D61.0
+val3 ORPHA:124     OMIM:615550
+val4 ORPHA:124 MedDRA:10062989
+val5 ORPHA:124   UMLS:C2931850
+val6 ORPHA:124     OMIM:612562
+
+> dim(crossId)
+[1] 41417     2
+
+> names(crossId) <- c("dbid1","dbid2")
+
+> crossId$DB2 <- gsub(":.*","",crossId$dbid2)
+
+> crossId$DB1 <- gsub(":.*","",crossId$dbid1)
+
+> crossId$id2 <- gsub(".*:","",crossId$dbid2)
+
+> crossId$id1 <- gsub(".*:","",crossId$dbid1)
+
+> dim(crossId)
+[1] 41417     6
+
+> ## remove ids with spaces
+> ## keep output copy paste
+> ## Remove crossIds without a colon (e.g. definitions, ...)
+> head(grep(":",crossId$dbid1,inv .... [TRUNCATED] 
+character(0)
+
+> head(grep(":",crossId$dbid2,invert = T,value = T))
+character(0)
+
+> ## crossId <- crossId[grepl(":",crossId$dbid2) & grepl(":",crossId$dbid1) ,]
+> dim(crossId)
+[1] 41417     6
+
+> ## Remove crossids with colon and space ": "
+> head(grep(": ",crossId$dbid2,value = T))
+character(0)
+
+> head(grep(": ",crossId$dbid1,value = T))
+character(0)
+
+> ## crossId <- crossId[grep(": ",crossId$dbid2,invert = T),]
+> dim(crossId)
+[1] 41417     6
+
+> ##
+> ## an integer is a correct disease ID
+> table(!is.na(as.numeric(crossId$id2)))
+
+FALSE  TRUE 
+25992 15425 
+
+> table(!is.na(as.numeric(crossId$id1)))
+
+ TRUE 
+41417 
+
+> toKeep <- crossId[which(!is.na(as.numeric(crossId$id2)) &
++                           !is.na(as.numeric(crossId$id1))),]
+
+> dim(toKeep)
+[1] 15425     6
+
+> toCheck <- crossId[-which(!is.na(as.numeric(crossId$id2)) &
++                             !is.na(as.numeric(crossId$id1))),]
+
+> dim(toCheck)
+[1] 25992     6
+
+> ## When removing prefix, an integer is a correct disease ID
+> table(!is.na(as.numeric(sub("^[^[:digit:]]*", "", toCheck$id2))))
+
+FALSE  TRUE 
+  126 25866 
+
+> table(!is.na(as.numeric(sub("^[^[:digit:]]*", "", toCheck$id1))))
+
+ TRUE 
+25992 
+
+> toKeep <- rbind(toKeep, 
++                 toCheck[which(!is.na(as.numeric(sub("^[^[:digit:]]*", "", toCheck$id2))) &
++                              .... [TRUNCATED] 
+
+> dim(toKeep)
+[1] 41291     6
+
+> toCheck <- toCheck[-which(!is.na(as.numeric(sub("^[^[:digit:]]*", "", toCheck$id2))) &
++                             !is.na(as.numeric(sub("^[^[:dig ..." ... [TRUNCATED] 
+
+> dim(toCheck)
+[1] 126   6
+
+> ## Remove any DBs that are not disease DBs and DB1 can only be "EFO" or "Orphanet"
+> ## check wrong IDs, remove weird ones still
+> table(toCheck$DB2 .... [TRUNCATED] 
+
+ICD-10 
+   126 
+
+> table(toCheck$DB1)
+
+ORPHA 
+  126 
+
+> toCheck[toCheck$DB2 == "ICD-10",]
+                 dbid1         dbid2    DB2   DB1    id2    id1
+val2380    ORPHA:99931 ICD-10:E83.1+ ICD-10 ORPHA E83.1+  99931
+val6209    ORPHA:99931 ICD-10:J99.8* ICD-10 ORPHA J99.8*  99931
+val1484    ORPHA:99930 ICD-10:E83.1+ ICD-10 ORPHA E83.1+  99930
+val2381    ORPHA:99930 ICD-10:J99.8* ICD-10 ORPHA J99.8*  99930
+val1488    ORPHA:99932 ICD-10:J99.8* ICD-10 ORPHA J99.8*  99932
+val2385    ORPHA:99932 ICD-10:E83.1+ ICD-10 ORPHA E83.1+  99932
+val1524    ORPHA:99922   ICD-10:L12+ ICD-10 ORPHA   L12+  99922
+val2407    ORPHA:99922 ICD-10:H13.3* ICD-10 ORPHA H13.3*  99922
+val1666    ORPHA:97355   ICD-10:G20+ ICD-10 ORPHA   G20+  97355
+val2543    ORPHA:97355 ICD-10:F02.3* ICD-10 ORPHA F02.3*  97355
+val3403    ORPHA:97345 ICD-10:E85.4+ ICD-10 ORPHA E85.4+  97345
+val6279    ORPHA:97345 ICD-10:E85.4+ ICD-10 ORPHA E85.4+  97345
+val7154    ORPHA:97345 ICD-10:I68.0* ICD-10 ORPHA I68.0*  97345
+val977     ORPHA:97345 ICD-10:I68.0* ICD-10 ORPHA I68.0*  97345
+val1683    ORPHA:97346 ICD-10:E85.4+ ICD-10 ORPHA E85.4+  97346
+val4384    ORPHA:97346 ICD-10:E85.4+ ICD-10 ORPHA E85.4+  97346
+val8151    ORPHA:97346 ICD-10:I68.0* ICD-10 ORPHA I68.0*  97346
+val1079    ORPHA:97346 ICD-10:I68.0* ICD-10 ORPHA I68.0*  97346
+val2879     ORPHA:1164 ICD-10:B44.1+ ICD-10 ORPHA B44.1+   1164
+val3681     ORPHA:1164 ICD-10:J99.8* ICD-10 ORPHA J99.8*   1164
+val11236  ORPHA:319635 ICD-10:L99.0* ICD-10 ORPHA L99.0* 319635
+val21026  ORPHA:319635 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 319635
+val11497   ORPHA:49804 ICD-10:L99.0* ICD-10 ORPHA L99.0*  49804
+val21284   ORPHA:49804 ICD-10:E85.4+ ICD-10 ORPHA E85.4+  49804
+val21600  ORPHA:439254 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 439254
+val31252  ORPHA:439254 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 439254
+val7430   ORPHA:439254 ICD-10:I68.0* ICD-10 ORPHA I68.0* 439254
+val8403   ORPHA:439254 ICD-10:I68.0* ICD-10 ORPHA I68.0* 439254
+val12030   ORPHA:85436 ICD-10:L40.5+ ICD-10 ORPHA L40.5+  85436
+val31384   ORPHA:85436 ICD-10:M09.0* ICD-10 ORPHA M09.0*  85436
+val21843   ORPHA:85447 ICD-10:G63.3* ICD-10 ORPHA G63.3*  85447
+val31416   ORPHA:85447 ICD-10:G63.3* ICD-10 ORPHA G63.3*  85447
+val41330   ORPHA:85447 ICD-10:E85.1+ ICD-10 ORPHA E85.1+  85447
+val51031   ORPHA:85447 ICD-10:E85.1+ ICD-10 ORPHA E85.1+  85447
+val12181   ORPHA:85458 ICD-10:E85.4+ ICD-10 ORPHA E85.4+  85458
+val41348   ORPHA:85458 ICD-10:I68.0* ICD-10 ORPHA I68.0*  85458
+val51048   ORPHA:85458 ICD-10:I68.0* ICD-10 ORPHA I68.0*  85458
+val9201    ORPHA:85458 ICD-10:E85.4+ ICD-10 ORPHA E85.4+  85458
+val21881   ORPHA:85451 ICD-10:E85.4+ ICD-10 ORPHA E85.4+  85451
+val31445   ORPHA:85451 ICD-10:I43.1* ICD-10 ORPHA I43.1*  85451
+val41358   ORPHA:85451 ICD-10:E85.4+ ICD-10 ORPHA E85.4+  85451
+val6979    ORPHA:85451 ICD-10:I43.1* ICD-10 ORPHA I43.1*  85451
+val12195   ORPHA:85453 ICD-10:L99.0* ICD-10 ORPHA L99.0*  85453
+val21884   ORPHA:85453 ICD-10:E85.0+ ICD-10 ORPHA E85.0+  85453
+val6981    ORPHA:85453 ICD-10:L99.0* ICD-10 ORPHA L99.0*  85453
+val8450    ORPHA:85453 ICD-10:E85.0+ ICD-10 ORPHA E85.0+  85453
+val12404  ORPHA:319247 ICD-10:J17.1* ICD-10 ORPHA J17.1* 319247
+val22079  ORPHA:319247 ICD-10:B33.4+ ICD-10 ORPHA B33.4+ 319247
+val22724     ORPHA:723   ICD-10:B59+ ICD-10 ORPHA   B59+    723
+val32125     ORPHA:723 ICD-10:J17.3* ICD-10 ORPHA J17.3*    723
+val13267    ORPHA:1482 ICD-10:A54.3+ ICD-10 ORPHA A54.3+   1482
+val22823    ORPHA:1482 ICD-10:H13.1* ICD-10 ORPHA H13.1*   1482
+val13311     ORPHA:375 ICD-10:M31.0+ ICD-10 ORPHA M31.0+    375
+val42122     ORPHA:375 ICD-10:N08.5* ICD-10 ORPHA N08.5*    375
+val13401     ORPHA:340 ICD-10:N08.0* ICD-10 ORPHA N08.0*    340
+val61632     ORPHA:340 ICD-10:A98.5+ ICD-10 ORPHA A98.5+    340
+val14350    ORPHA:3020 ICD-10:B02.2+ ICD-10 ORPHA B02.2+   3020
+val23760    ORPHA:3020 ICD-10:G53.0* ICD-10 ORPHA G53.0*   3020
+val15244  ORPHA:137807 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 137807
+val33725  ORPHA:137807 ICD-10:L99.0* ICD-10 ORPHA L99.0* 137807
+val15247  ORPHA:353220 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 353220
+val24576  ORPHA:353220 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 353220
+val43529  ORPHA:353220 ICD-10:L99.0* ICD-10 ORPHA L99.0* 353220
+val71207  ORPHA:353220 ICD-10:L99.0* ICD-10 ORPHA L99.0* 353220
+val15250  ORPHA:137814 ICD-10:L99.0* ICD-10 ORPHA L99.0* 137814
+val24579  ORPHA:137814 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 137814
+val15253  ORPHA:137810 ICD-10:L99.0* ICD-10 ORPHA L99.0* 137810
+val24582  ORPHA:137810 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 137810
+val15495    ORPHA:3452 ICD-10:K90.8+ ICD-10 ORPHA K90.8+   3452
+val43740    ORPHA:3452 ICD-10:M14.8* ICD-10 ORPHA M14.8*   3452
+val34223  ORPHA:439854 ICD-10:G73.6* ICD-10 ORPHA G73.6* 439854
+val43991  ORPHA:439854 ICD-10:E74.0+ ICD-10 ORPHA E74.0+ 439854
+val53309  ORPHA:439854 ICD-10:G73.6* ICD-10 ORPHA G73.6* 439854
+val71326  ORPHA:439854 ICD-10:E74.0+ ICD-10 ORPHA E74.0+ 439854
+val25280  ORPHA:137586 ICD-10:H19.1* ICD-10 ORPHA H19.1* 137586
+val34336  ORPHA:137586 ICD-10:B00.5+ ICD-10 ORPHA B00.5+ 137586
+val44469  ORPHA:100006 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 100006
+val53670  ORPHA:100006 ICD-10:I68.0* ICD-10 ORPHA I68.0* 100006
+val63336  ORPHA:100006 ICD-10:I68.0* ICD-10 ORPHA I68.0* 100006
+val141016 ORPHA:100006 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 100006
+val16509  ORPHA:100008 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 100008
+val25753  ORPHA:100008 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 100008
+val34723  ORPHA:100008 ICD-10:I68.0* ICD-10 ORPHA I68.0* 100008
+val44479  ORPHA:100008 ICD-10:I68.0* ICD-10 ORPHA I68.0* 100008
+val16597  ORPHA:100067 ICD-10:A39.1+ ICD-10 ORPHA A39.1+ 100067
+val25838  ORPHA:100067 ICD-10:E35.1* ICD-10 ORPHA E35.1* 100067
+val26665  ORPHA:279904  ICD-10:C85,7 ICD-10 ORPHA  C85,7 279904
+val26988  ORPHA:314684  ICD-10:C85,7 ICD-10 ORPHA  C85,7 314684
+val18037  ORPHA:411634 ICD-10:E72.0+ ICD-10 ORPHA E72.0+ 411634
+val27244  ORPHA:411634 ICD-10:N16.3* ICD-10 ORPHA N16.3* 411634
+val64253  ORPHA:411634 ICD-10:E72.0+ ICD-10 ORPHA E72.0+ 411634
+val81405  ORPHA:411634 ICD-10:N16.3* ICD-10 ORPHA N16.3* 411634
+val18212  ORPHA:411629 ICD-10:N16.3* ICD-10 ORPHA N16.3* 411629
+val27325  ORPHA:411629 ICD-10:E72.0+ ICD-10 ORPHA E72.0+ 411629
+val54757  ORPHA:411629 ICD-10:E72.0+ ICD-10 ORPHA E72.0+ 411629
+val81414  ORPHA:411629 ICD-10:N16.3* ICD-10 ORPHA N16.3* 411629
+val37517   ORPHA:33475   ICD-10:G01* ICD-10 ORPHA   G01*  33475
+val47159   ORPHA:33475 ICD-10:A39.0+ ICD-10 ORPHA A39.0+  33475
+val65388    ORPHA:1930 ICD-10:B00.4+ ICD-10 ORPHA B00.4+   1930
+val71996    ORPHA:1930 ICD-10:B00.4+ ICD-10 ORPHA B00.4+   1930
+val9809     ORPHA:1930 ICD-10:G05.1* ICD-10 ORPHA G05.1*   1930
+val121251   ORPHA:1930 ICD-10:G05.1* ICD-10 ORPHA G05.1*   1930
+val110349  ORPHA:83616 ICD-10:B06.0+ ICD-10 ORPHA B06.0+  83616
+val29438   ORPHA:83616 ICD-10:G05.1* ICD-10 ORPHA G05.1*  83616
+val110378 ORPHA:324723 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324723
+val37845  ORPHA:324723 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324723
+val47454  ORPHA:324723 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324723
+val56187  ORPHA:324723 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324723
+val110382 ORPHA:324718 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324718
+val37849  ORPHA:324718 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324718
+val47458  ORPHA:324718 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324718
+val56190  ORPHA:324718 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324718
+val110384 ORPHA:324713 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324713
+val29473  ORPHA:324713 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324713
+val47459  ORPHA:324713 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324713
+val65555  ORPHA:324713 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324713
+val110413 ORPHA:324708 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324708
+val29502  ORPHA:324708 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324708
+val56208  ORPHA:324708 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324708
+val65571  ORPHA:324708 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324708
+val29507  ORPHA:324703 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324703
+val37876  ORPHA:324703 ICD-10:E85.4+ ICD-10 ORPHA E85.4+ 324703
+val47484  ORPHA:324703 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324703
+val56211  ORPHA:324703 ICD-10:I68.0* ICD-10 ORPHA I68.0* 324703
+val29952   ORPHA:67043 ICD-10:B60.1+ ICD-10 ORPHA B60.1+  67043
+val47877   ORPHA:67043 ICD-10:H19.2* ICD-10 ORPHA H19.2*  67043
+
+> table(toKeep$DB2)
+
+ICD-10 MedDRA   MeSH   OMIM   UMLS 
+ 13473   1758   3081  13667   9312 
+
+> table(toKeep$DB1)
+
+ORPHA 
+41291 
+
+> crossId <- setNames(toKeep[,c("dbid1","dbid2")],c("id1","id2"))
+
+> dim(crossId)
+[1] 41291     2
+
+> head(crossId)
+           id1             id2
+val3 ORPHA:124     OMIM:615550
+val4 ORPHA:124 MedDRA:10062989
+val6 ORPHA:124     OMIM:612562
+val7 ORPHA:124     OMIM:613309
+val8 ORPHA:124     OMIM:613308
+val9 ORPHA:124     OMIM:606164
+
+> unique(grep("#",crossId$id1, value =T))
+character(0)
+
+> unique(grep("#",crossId$id2, value =T))
+character(0)
+
+> dim(crossId)
+[1] 41291     2
+
+> crossId$id2 <- gsub("ICD-10","ICD10",crossId$id2)
+
+> crossId$id2 <- gsub("UMLS","MedGen",crossId$id2)
+
+> crossId$DB2 <- gsub(":.*","",crossId$id2)
+
+> crossId$DB1 <- gsub(":.*","",crossId$id1)
+
+> ## Remove self references
+> dim(crossId)
+[1] 41291     4
+
+> crossId[which(crossId$id1 == crossId$id2),]
+[1] id1 id2 DB2 DB1
+<0 rows> (or 0-length row.names)
+
+> dim(crossId)
+[1] 41291     4
+
+> ## crossId <- crossId[-which(crossId$id1 == crossId$id2),]
+> 
+> 
+> ######################################
+> ## entryId
+> entryId <- id[id$id %in% di .... [TRUNCATED] 
+
+> table(gsub(":.*","",entryId$id))
+
+ORPHA 
+ 9075 
+
+> entryId <- entryId[grep(":",entryId$id),,drop = FALSE]
+
+> table(gsub(":.*","",entryId$id))
+
+ORPHA 
+ 9075 
+
+> entryId$DB <- gsub(":.*","",entryId$id)
+
+> head(entryId)
+            id
+1    ORPHA:124
+2 ORPHA:199315
+3    ORPHA:123
+4    ORPHA:126
+5 ORPHA:209203
+6 ORPHA:199318
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      def
+1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        Blackfan-Diamond anemia (DBA) is a congenital aregenerative and often macrocytic anemia with erythroblastopenia.
+2 Familial clubfoot with or without associated lower limb anomalies is a rare congenital limb malformation syndrome characterized by malalignment of the bones and joints of the foot and ankle, with presence of forefoot and midfoot adductus, hindfoot varus, and ankle equinus, presenting as rigid inward turning of the foot towards the midline, in various members of a single family. Hypoplasia of lower leg muscles is a frequently associated finding. Patients may present with other low-limb malformations, such as patellar hypoplasia, oblique talus, tibial hemimelia, and polydactyly.
+3                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Björnstad syndrome is characterized by congenital sensorineural hearing loss and pili torti.
+4                                                                                                                                                                                                                                                                                                              Blepharophimosis, Ptosis, and Epicanthus Inversus syndrome (BPES) is an ophthalmic disorder characterized by blepharophimosis, ptosis, epicanthus inversus, and telecanthus, that can appear associated with (type I) or without premature ovarian failure (POF; see this term) (type II).
+5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <NA>
+6                                                                                                                                                                                                                                                                                                                                                                                                                                             15q13.3 microdeletion (microdel15q13.3) syndrome is characterized by a wide spectrum of neurodevelopmental disorders with no or subtle dysmorphic features.
+                                                                                                       label    DB
+1                                                                                    Blackfan-Diamond anemia ORPHA
+2                                          Familial clubfoot with or without associated lower limb anomalies ORPHA
+3                                                                                         Björnstad syndrome ORPHA
+4                                                       Blepharophimosis-epicanthus inversus-ptosis syndrome ORPHA
+5 Qualitative or quantitative defects of glucosamine (UDP-N-acetyl)-2-epimerase/N-acetylmannosamine kinase - ORPHA
+6                                                                             15q13.3 microdeletion syndrome ORPHA
+
+> entryId <- entryId[,c("DB","id","def")]
+
+> unique(grep("#",entryId$id, value =T))
+character(0)
+
+> ## Empty definition to NA
+> tail(sort(table(nchar(entryId$def))))
+
+167 188 238 240 232 235 
+ 21  22  22  22  23  23 
+
+> head(entryId[entryId$def == "",])
+       DB   id  def
+NA   <NA> <NA> <NA>
+NA.1 <NA> <NA> <NA>
+NA.2 <NA> <NA> <NA>
+NA.3 <NA> <NA> <NA>
+NA.4 <NA> <NA> <NA>
+NA.5 <NA> <NA> <NA>
+
+> # entryId$def <- ifelse(entryId$def == "",NA,entryId$def)
+> 
+> ## Check characters for \t, \n, \r and put to ASCII
+> entryId$def <- iconv(x = entryI .... [TRUNCATED] 
+
+> table(unlist(sapply(entryId$def, strsplit, split = "")))
+
+            -      ,      ;      :      ?      .      '      "      (      )      [      ]      *      /      #      %      ` 
+198286   5076  16513    563    147     30   8519    209     15   6321   6354      6      6      1    685      8    107     12 
+     +      ~      0      1      2      3      4      5      6      7      8      9      a      A      b      B      c      C 
+    23      1    408   1371   1018    576    361    353    262    157    212    226 119628   2512  18467    926  52588   2451 
+     d      D      e      E      f      F      g      G      h      H      i      I      j      J      k      K      l      L 
+ 50961   1787 138493    823  22911    815  19208    860  40535   1338 106141   1975    581    182   3845    282  63197    983 
+     m      M      n      N      o      O      p      P      q      Q      r      R      s      S      t      T      u      U 
+ 39813   1667  82409    797  87307    605  32623   1889    849     34  87041    815  88590   2182  89774   1958  28390    150 
+     v      V      w      W      x      X      y      Y      z      Z 
+ 11117    378   7839    319   3050    495  34243     98   4297     44 
+
+> entryId$def <- gsub(paste("\n","\t","\r", sep = "|")," ",entryId$def)
+
+> table(unlist(sapply(entryId$def, strsplit, split = "")))
+
+            -      ,      ;      :      ?      .      '      "      (      )      [      ]      *      /      #      %      ` 
+198286   5076  16513    563    147     30   8519    209     15   6321   6354      6      6      1    685      8    107     12 
+     +      ~      0      1      2      3      4      5      6      7      8      9      a      A      b      B      c      C 
+    23      1    408   1371   1018    576    361    353    262    157    212    226 119628   2512  18467    926  52588   2451 
+     d      D      e      E      f      F      g      G      h      H      i      I      j      J      k      K      l      L 
+ 50961   1787 138493    823  22911    815  19208    860  40535   1338 106141   1975    581    182   3845    282  63197    983 
+     m      M      n      N      o      O      p      P      q      Q      r      R      s      S      t      T      u      U 
+ 39813   1667  82409    797  87307    605  32623   1889    849     34  87041    815  88590   2182  89774   1958  28390    150 
+     v      V      w      W      x      X      y      Y      z      Z 
+ 11117    378   7839    319   3050    495  34243     98   4297     44 
+
+> entryId$def <- gsub("\"","'",entryId$def)
+
+> table(unlist(sapply(entryId$def, strsplit, split = "")))
+
+            -      ,      ;      :      ?      .      '      (      )      [      ]      *      /      #      %      `      + 
+198286   5076  16513    563    147     30   8519    224   6321   6354      6      6      1    685      8    107     12     23 
+     ~      0      1      2      3      4      5      6      7      8      9      a      A      b      B      c      C      d 
+     1    408   1371   1018    576    361    353    262    157    212    226 119628   2512  18467    926  52588   2451  50961 
+     D      e      E      f      F      g      G      h      H      i      I      j      J      k      K      l      L      m 
+  1787 138493    823  22911    815  19208    860  40535   1338 106141   1975    581    182   3845    282  63197    983  39813 
+     M      n      N      o      O      p      P      q      Q      r      R      s      S      t      T      u      U      v 
+  1667  82409    797  87307    605  32623   1889    849     34  87041    815  88590   2182  89774   1958  28390    150  11117 
+     V      w      W      x      X      y      Y      z      Z 
+   378   7839    319   3050    495  34243     98   4297     44 
+
+> ## Check duplicated records
+> dim(entryId)
+[1] 9075    3
+
+> length(unique(entryId[,"id"]))
+[1] 9075
+
+> ## all crossId$id1 in entryId
+> table(crossId$id1 %in% entryId$id)
+
+ TRUE 
+41291 
+
+> ######################################
+> ## idNames
+> idNames <- syn[syn$id %in% disease$descendants,]
+
+> table(gsub(":.*","",idNames$id))
+
+ORPHA 
+11852 
+
+> unique(grep("#",idNames$id, value =T))
+character(0)
+
+> head(idNames)
+         id                                                  syn
+1 ORPHA:124                     Congenital pure red cell aplasia
+2 ORPHA:124                                      Congenital PRCA
+3 ORPHA:124                                        Aase syndrome
+4 ORPHA:124 Congenital hypoplastic anemia, Blackfan-Diamond type
+5 ORPHA:124                               Aase-Smith II syndrome
+6 ORPHA:123            Deafness-pili torti-hypogonadism syndrome
+
+> ## Labels
+> lbl <- id[id$id %in% disease$descendants,c("id","label")]
+
+> table(gsub(":.*","",lbl$id))
+
+ORPHA 
+ 9075 
+
+> head(lbl)
+            id                                                                                                      label
+1    ORPHA:124                                                                                    Blackfan-Diamond anemia
+2 ORPHA:199315                                          Familial clubfoot with or without associated lower limb anomalies
+3    ORPHA:123                                                                                         Björnstad syndrome
+4    ORPHA:126                                                       Blepharophimosis-epicanthus inversus-ptosis syndrome
+5 ORPHA:209203 Qualitative or quantitative defects of glucosamine (UDP-N-acetyl)-2-epimerase/N-acetylmannosamine kinase -
+6 ORPHA:199318                                                                             15q13.3 microdeletion syndrome
+
+> unique(grep("#",lbl$id, value =T))
+character(0)
+
+> # lbl <- lbl[grep("#",lbl$id,invert = T, value = F),]
+> 
+> ## 
+> idNames <- rbind(idNames,setNames(lbl, nm = names(idNames)))
+
+> idNames$DB <- gsub(":.*","",idNames$id)
+
+> idNames$canonical <- ifelse(idNames$syn %in% lbl$label, TRUE, FALSE)
+
+> ## Remove duplicated entries but keep all labels 
+> dim(idNames)
+[1] 20927     4
+
+> dim(unique(idNames))
+[1] 20927     4
+
+> idNames <- idNames[order(idNames$canonical,decreasing = T),]
+
+> idNames <- unique(idNames)
+
+> dim(idNames)
+[1] 20927     4
+
+> ## Check characters for \t, \n, \r and put to ASCII
+> idNames$syn <- iconv(x = idNames$syn,to="ASCII//TRANSLIT")
+
+> table(unlist(sapply(idNames$syn, strsplit, split = "")))
+
+          -     ,     ;     :     .     '     "     (     )     /     +     0     1     2     3     4     5     6     7     8 
+55559  7982  1210    38     4   386    36     4   378   378   270    32   245  2496  1892   983   672   382   458   311   218 
+    9     a     A     b     B     c     C     d     D     e     E     f     F     g     G     h     H     i     I     j     J 
+  222 50850  3726  4899  1379 24399  3959 24533  3023 60076  1164  7992  1301  7627  1742 14732  1964 50080  2390   282   283 
+    k     K     l     L     m     M     n     N     o     O     p     P     q     Q     r     R     s     S     t     T     u 
+ 1947   495 32654  1468 23745  2868 36573  1177 48484   936 18328  3314  1015    94 38089  1618 37304  3060 38688  1594 14178 
+    U     v     V     w     W     x     X     y     Y     z     Z 
+  327  3680   496  1954   367  1514   818 24699   222   594    63 
+
+> idNames$syn <- gsub(paste("\n","\t","\r", sep = "|")," ",idNames$syn)
+
+> table(unlist(sapply(idNames$syn, strsplit, split = "")))
+
+          -     ,     ;     :     .     '     "     (     )     /     +     0     1     2     3     4     5     6     7     8 
+55559  7982  1210    38     4   386    36     4   378   378   270    32   245  2496  1892   983   672   382   458   311   218 
+    9     a     A     b     B     c     C     d     D     e     E     f     F     g     G     h     H     i     I     j     J 
+  222 50850  3726  4899  1379 24399  3959 24533  3023 60076  1164  7992  1301  7627  1742 14732  1964 50080  2390   282   283 
+    k     K     l     L     m     M     n     N     o     O     p     P     q     Q     r     R     s     S     t     T     u 
+ 1947   495 32654  1468 23745  2868 36573  1177 48484   936 18328  3314  1015    94 38089  1618 37304  3060 38688  1594 14178 
+    U     v     V     w     W     x     X     y     Y     z     Z 
+  327  3680   496  1954   367  1514   818 24699   222   594    63 
+
+> idNames$syn <- gsub("\"","'",idNames$syn)
+
+> table(unlist(sapply(idNames$syn, strsplit, split = "")))
+
+          -     ,     ;     :     .     '     (     )     /     +     0     1     2     3     4     5     6     7     8     9 
+55559  7982  1210    38     4   386    40   378   378   270    32   245  2496  1892   983   672   382   458   311   218   222 
+    a     A     b     B     c     C     d     D     e     E     f     F     g     G     h     H     i     I     j     J     k 
+50850  3726  4899  1379 24399  3959 24533  3023 60076  1164  7992  1301  7627  1742 14732  1964 50080  2390   282   283  1947 
+    K     l     L     m     M     n     N     o     O     p     P     q     Q     r     R     s     S     t     T     u     U 
+  495 32654  1468 23745  2868 36573  1177 48484   936 18328  3314  1015    94 38089  1618 37304  3060 38688  1594 14178   327 
+    v     V     w     W     x     X     y     Y     z     Z 
+ 3680   496  1954   367  1514   818 24699   222   594    63 
+
+> table(is.na(idNames$syn))
+
+FALSE 
+20927 
+
+> idNames <- idNames[!is.na(idNames$syn),]
+
+> idNames <- unique(idNames)
+
+> ## all idNames in entryId
+> table(idNames$id %in% entryId$id)
+
+ TRUE 
+20927 
+
+> ## Remove empty names, ifany
+> nc <- nchar(idNames$syn)
+
+> idNames[which(nc == 0),]
+[1] id        syn       DB        canonical
+<0 rows> (or 0-length row.names)
+
+> ## Remove names of 1 character long
+> idNames[which(nc == 1),]
+[1] id        syn       DB        canonical
+<0 rows> (or 0-length row.names)
+
+> # idNames <- idNames[-which(nc == 0),]
+> 
+> 
+> ######################################
+> ## parentId
+> parentId <- edgesJson[which(edgesJson$obj %in% .... [TRUNCATED] 
+
+> table(gsub(":.*","",parentId$sub))
+
+ORPHA 
+11746 
+
+> table(gsub(":.*","",parentId$obj))
+
+ORPHA 
+11746 
+
+> names(parentId) <- c("id","parent")
+
+> parentId$DB <- gsub(":.*","",parentId$id)
+
+> parentId$pDB <- gsub(":.*","",parentId$parent)
+
+> ## all parentId in entryId
+> table(parentId$id %in% entryId$id)
+
+ TRUE 
+11746 
+
+> table(parentId$parent %in% entryId$id)
+
+ TRUE 
+11746 
+
+> ## "Phenome" not in entryId --> OK
+> parentId[!(parentId$parent %in% entryId$id),]
+[1] id     parent DB     pDB   
+<0 rows> (or 0-length row.names)
+
+> #######################################
+> crossId$id1 <- gsub(".*:","",crossId$id1)
+
+> crossId$id2 <- gsub(".*:","",crossId$id2)
+
+> entryId$id <- gsub(".*:","",entryId$id)
+
+> parentId$id <- gsub(".*:","",parentId$id)
+
+> idNames$id <- gsub(".*:","",idNames$id)
+
+> parentId$parent <- gsub(".*:","",parentId$parent)
+
+> Orphanet_crossId <- crossId[,c("DB1","id1","DB2","id2")]
+
+> Orphanet_entryId <- entryId[,c("DB","id","def")]
+
+> Orphanet_idNames <- idNames[,c("DB","id","syn","canonical")]
+
+> Orphanet_parentId <- parentId[c("DB","id","pDB","parent")]
+
+> ######################################
+> ## Writing tables
+> ######################################
+> message("Writing tables ....")
+Writing tables ....
+
+> message(Sys.time())
+2018-06-07 09:29:02
+
+> toSave <- grep("^Orphanet_",ls(),value = T)
+
+> for(f in toSave){
++   message(paste("Saving", f))
++   print(file.path(ddir, paste(f, ".txt", sep="")))
++   ## Ensure unicity
++   assign(f, get(f))
++ .... [TRUNCATED] 
+Saving Orphanet_crossId
+[1] "../data/Orphanet_crossId.txt"
+Saving Orphanet_entryId
+[1] "../data/Orphanet_entryId.txt"
+Saving Orphanet_idNames
+[1] "../data/Orphanet_idNames.txt"
+Saving Orphanet_parentId
+[1] "../data/Orphanet_parentId.txt"
+Saving Orphanet_sourceFiles
+[1] "../data/Orphanet_sourceFiles.txt"
+Warning messages:
+1: In table(!is.na(as.numeric(crossId$id2))) : NAs introduced by coercion
+2: In which(!is.na(as.numeric(crossId$id2)) & !is.na(as.numeric(crossId$id1))) :
+  NAs introduced by coercion
+3: In which(!is.na(as.numeric(crossId$id2)) & !is.na(as.numeric(crossId$id1))) :
+  NAs introduced by coercion
+4: In table(!is.na(as.numeric(sub("^[^[:digit:]]*", "", toCheck$id2)))) :
+  NAs introduced by coercion
+5: In which(!is.na(as.numeric(sub("^[^[:digit:]]*", "", toCheck$id2))) &  :
+  NAs introduced by coercion
+6: In which(!is.na(as.numeric(sub("^[^[:digit:]]*", "", toCheck$id2))) &  :
+  NAs introduced by coercion
