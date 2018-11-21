@@ -1,46 +1,8 @@
 setwd("~/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/scripts/")
 
-
 ####################################
-## ROLS
-## Use rols package from OLS EBI to get parent and label information. It does not always contain 
-## Synonyms or definition, therefore we will get this information from the converted .json file.
-library(rols)
 library(RJSONIO)
 source("../../00-Utils/downloadSourceFiles.R")
-
-# ont <- Ontology("ordo")
-# ontTerms <- terms(ont)
-# ontId <- termId(ontTerms)
-# ontLabel <- lapply(ontTerms,
-#                    function(oid){
-#                      termLabel(oid)
-#                    })
-# ontParents <- lapply(ontTerms,
-#                      function(oid){
-#                        parents(oid)
-#                      })
-# # 
-# save(ontId,ontParents,ontLabel,ontTerms, file = "../sources/orphanetOLS.rda")
-# 
-# load("../sources/orphanet.rda")
-# OLSparse <- do.call(rbind,lapply(ontId,
-#                    function(oid){
-#                      ifelse(is.null(oid), 
-#                             return(NULL), 
-#                             return(data.frame(
-#                               id = oid,
-#                               label = ontLabel[[oid]],
-#                               parents = paste(as(ontParents[[oid]], "data.frame")$id,collapse = ", ")
-#                             ))
-#                      )
-#                    }))
-# OLSparse$id <- as.character(OLSparse$id)
-# OLSparse$parents <- as.character(OLSparse$parents)
-# x <- unique(OLSparse[, c("id", "parents")])
-# xList <- strsplit(x$parents, ", ")
-# names(xList) <- x$id
-# x <- stack(xList)
 
 ############################
 ## JSON file
@@ -55,10 +17,54 @@ urls <- unlist(lapply(
     return(toRet)
   }
 ))
-srcDir <- "../sources"
+srcDir <- "../sources/orphanet"
 
-downloadSourceFiles(urls, srcDir)
-if(!file.exists("../sources/ordo_orphanet.owl")){
-  unzip(zipfile = file.path(srcDir,"ordo_orphanet.owl.zip"), exdir = srcDir, overwrite = TRUE)
+gitRepo <- urls[1]
+
+## Clone or pull git repository
+if(!dir.exists(srcDir)){
+  gitRepo <- git2r::clone(url = gitRepo, local_path = srcDir)
+}else{
+  gitRepo <- git2r::repository(srcDir)
+  git2r::pull(gitRepo)
 }
+
+# downloadSourceFiles(urls, srcDir)
+# if(!file.exists("../sources/ordo_orphanet.owl")){
+#   unzip(zipfile = file.path(srcDir,"ordo_orphanet.owl.zip"), exdir = srcDir, overwrite = TRUE)
+# }
+
+
+###############################################################################@
+## Source information ----
+###############################################################################@
+desc <- RJSONIO::readJSONStream("../DESCRIPTION.json")
+
+sourceFiles <- desc$"source files"
+sfi_name <- unlist(lapply(
+  sourceFiles,
+  function(sf){
+    toRet <- sf$"name"
+    return(toRet)
+  }
+))
+
+unzip(zipfile = file.path(srcDir,sfi_name[[1]]), 
+      exdir = file.path(srcDir,"ordo_orphanet.owl"), 
+      overwrite = TRUE)
+
+###############################################
+## Information source files
+rcurrent <- git2r::odb_blobs(gitRepo)
+rcurrent <- tail(rcurrent[rcurrent$name == "ordo_orphanet.owl.zip",], n = 1L)
+
+Orphanet_sourceFiles <- data.frame(url = urls[1],
+                                  current = rcurrent$when)
+
+###############################################
+## Writing files
+toSave <- grep("^Orphanet[_]", ls(), value = T)
+ddir <- "../data"
+
+write.table(Orphanet_sourceFiles, file=file.path(ddir, paste(toSave, ".txt", sep="")))
 

@@ -7,7 +7,9 @@ library(XML)
 library(parallel)
 library(jsonlite)
 library(data.table)
-library(tidyjson)
+# library(tidyjson)
+library(here)
+source("../../00-Utils/writeLastUpdate.R")
 
 ##
 mc.cores <- 55
@@ -17,26 +19,26 @@ ddir <- "../data"
 ###############################################################################@
 ## Source information ----
 ###############################################################################@
+desc <- RJSONIO::readJSONStream("../DESCRIPTION.json")
 
-sfi <- read.table(
-   file.path(sdir, "ARCHIVES/ARCHIVES.txt"),
-   sep="\t",
-   header=T,
-   stringsAsFactors=FALSE
-)
-Orphanet_sourceFiles <- sfi[which(sfi$inUse), c("url", "current")]
-
+sourceFiles <- desc$"source files"
+sfi_name <- unlist(lapply(
+  sourceFiles,
+  function(sf){
+    toRet <- sf$"name"
+    return(toRet)
+  }
+))
 
 ###############################################################################@
 ## Data from ordo_orphanet_owl
 ###############################################################################@
 ## Convert OWL to JSON
-if(!file.exists(file.path(sdir,"ordo_orphanet.json"))){
-  Sys.setenv(PATH = paste(Sys.getenv("PATH"),"/home/lfrancois/bin/",sep = ":"))
-  system(paste("robot convert --input ",file.path(sdir,"ordo_orphanet.owl"),
-               " --output ",file.path(sdir,"ordo_orphanet.json"), sep = ""))
-}
-readJson <- jsonlite::fromJSON(txt = "../sources/ordo_orphanet.json")
+Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
+system(paste("robot convert --input ",file.path(sdir,"orphanet/ordo_orphanet.owl/ordo_orphanet.owl"),
+             " --output ",file.path(sdir,"orphanet/ordo_orphanet.owl/ordo_orphanet.json"), sep = ""))
+
+readJson <- jsonlite::fromJSON(txt = "../sources/orphanet/ordo_orphanet.owl/ordo_orphanet.json")
 
 propJson <- do.call(rbind,
                     lapply(1:nrow(readJson$graphs$nodes[[1]]),
@@ -49,7 +51,6 @@ propJson <- do.call(rbind,
                              }else{
                                NULL}
                            }))
-
 
 checkJson <- unique(unlist(lapply(readJson$graphs$nodes[[1]]$meta$basicPropertyValues,function(x) x$pred)))
 checkJson
@@ -190,7 +191,6 @@ unique(grep("#",crossId$id1, value =T))
 unique(grep("#",crossId$id2, value =T))
 dim(crossId)
 crossId$id2 <- gsub("ICD-10","ICD10",crossId$id2)
-crossId$id2 <- gsub("UMLS","MedGen",crossId$id2)
 crossId$DB2 <- gsub(":.*","",crossId$id2)
 crossId$DB1 <- gsub(":.*","",crossId$id1)
 
@@ -199,7 +199,6 @@ dim(crossId)
 crossId[which(crossId$id1 == crossId$id2),]
 dim(crossId)
 ## crossId <- crossId[-which(crossId$id1 == crossId$id2),]
-
 
 ######################################
 ## entryId
@@ -324,6 +323,13 @@ for(f in toSave){
     file=file.path(ddir, paste(f, ".txt", sep="")),
     sep="\t",
     row.names=FALSE, col.names=TRUE,
-    quote=FALSE
+    quote=TRUE,
+    qmethod = "double"
   )
 }
+
+writeLastUpdate()
+
+##############################################################
+## Check model
+source("../../00-Utils/autoCheckModel.R")

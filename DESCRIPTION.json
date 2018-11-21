@@ -6,11 +6,11 @@
 	"version": "0.2",
 	"source files": [
 	    	{
-			"name":"ordo_orphanet.owl.zip",
-			"URL template":"http://www.orphadata.org/data/ORDO/ordo_orphanet.owl.zip",
+			"name":"Orphanet Rare Disease Ontology/ordo_orphanet.owl.zip",
+			"URL template":"https://github.com/Orphanet/Orphadata.org",
 			"remote update frequency": {
 				"value": 0,
-				"units": "1/day"
+				"units": "1/month"
 			}
 		},
 	    	{
