@@ -1,0 +1,19 @@
+{
+	"collection":"Condition",
+	"resource":"Orphanet",
+	"tables":[
+		{
+			"name":"Orphanet_entryId",
+			"fields":{
+				"source": {
+					"static":true,
+					"value":"DB"
+				},
+				"identifier": {
+					"static":false,
+					"value":"id"
+				}
+			}
+		}
+	]
+}

@@ -9,6 +9,9 @@ library(jsonlite)
 library(data.table)
 # library(tidyjson)
 library(here)
+library(tibble)
+library(tidyr)
+library(dplyr)
 source("../../00-Utils/writeLastUpdate.R")
 
 ##
@@ -138,6 +141,12 @@ crossId <- xref[xref$id %in% disease$descendants,]
 head(crossId)
 dim(crossId)
 names(crossId) <- c("dbid1","dbid2")
+## Remove spaces
+head(grep(": ",crossId$dbid2,value = T))
+head(grep(": ",crossId$dbid1,value = T))
+crossId$dbid1 <- gsub(" ","",crossId$dbid1)
+crossId$dbid2 <- gsub(" ","",crossId$dbid2)
+##
 crossId$DB2 <- gsub(":.*","",crossId$dbid2)
 crossId$DB1 <- gsub(":.*","",crossId$dbid1)
 crossId$id2 <- gsub(".*:","",crossId$dbid2)
@@ -150,9 +159,6 @@ head(grep(":",crossId$dbid1,invert = T,value = T))
 head(grep(":",crossId$dbid2,invert = T,value = T))
 ## crossId <- crossId[grepl(":",crossId$dbid2) & grepl(":",crossId$dbid1) ,]
 dim(crossId)
-## Remove crossids with colon and space ": "
-head(grep(": ",crossId$dbid2,value = T))
-head(grep(": ",crossId$dbid1,value = T))
 ## crossId <- crossId[grep(": ",crossId$dbid2,invert = T),]
 dim(crossId)
 ##
@@ -190,6 +196,7 @@ head(crossId)
 unique(grep("#",crossId$id1, value =T))
 unique(grep("#",crossId$id2, value =T))
 dim(crossId)
+table(gsub(":.*","",crossId$id2))
 crossId$id2 <- gsub("ICD-10","ICD10",crossId$id2)
 crossId$DB2 <- gsub(":.*","",crossId$id2)
 crossId$DB1 <- gsub(":.*","",crossId$id1)
@@ -233,22 +240,24 @@ table(crossId$id1 %in% entryId$id)
 ######################################
 ## idNames
 idNames <- syn[syn$id %in% disease$descendants,]
+idNames$canonical <- FALSE
 table(gsub(":.*","",idNames$id))
 unique(grep("#",idNames$id, value =T))
 head(idNames)
 ## Labels
 lbl <- id[id$id %in% disease$descendants,c("id","label")]
+lbl$canonical <- TRUE
 table(gsub(":.*","",lbl$id))
 head(lbl)
 unique(grep("#",lbl$id, value =T))
 # lbl <- lbl[grep("#",lbl$id,invert = T, value = F),]
 
 ## 
-idNames <- rbind(idNames,setNames(lbl, nm = names(idNames)))
-idNames$DB <- gsub(":.*","",idNames$id)
-idNames$canonical <- ifelse(idNames$syn %in% lbl$label, TRUE, FALSE)
-## Remove duplicated entries but keep all labels 
-dim(idNames)
+idNames <- idNames %>%
+  as_tibble() %>%
+  bind_rows(lbl %>% select(id, syn = label, canonical)) %>%
+  mutate(DB = gsub(":.*","", id))
+## unique
 dim(unique(idNames))
 idNames <- idNames[order(idNames$canonical,decreasing = T),]
 idNames <- unique(idNames)
