@@ -3,6 +3,8 @@ setwd("~/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/scripts/")
 ####################################
 library(RJSONIO)
 source("../../00-Utils/downloadSourceFiles.R")
+library(tibble)
+library(dplyr)
 
 ############################
 ## JSON file
@@ -49,22 +51,25 @@ sfi_name <- unlist(lapply(
   }
 ))
 
-unzip(zipfile = file.path(srcDir,sfi_name[[1]]), 
-      exdir = file.path(srcDir,"ordo_orphanet.owl"), 
-      overwrite = TRUE)
+# unzip(zipfile = file.path(srcDir,sfi_name[[1]]), 
+#       exdir = file.path(srcDir,"ordo_orphanet.owl"), 
+#       overwrite = TRUE)
 
 ###############################################
 ## Information source files
 rcurrent <- git2r::odb_blobs(gitRepo)
-rcurrent <- tail(rcurrent[rcurrent$name == "ordo_orphanet.owl.zip",], n = 1L)
+rcurrent <- tail(rcurrent[rcurrent$name == "en_product1.json",], n = 1L)
 
 Orphanet_sourceFiles <- data.frame(url = urls[1],
-                                  current = rcurrent$when)
+                                  current = rcurrent$when) %>%
+  mutate_all(as.character())
 
 ###############################################
 ## Writing files
 toSave <- grep("^Orphanet[_]", ls(), value = T)
 ddir <- "../data"
 
-write.table(Orphanet_sourceFiles, file=file.path(ddir, paste(toSave, ".txt", sep="")))
+write.table(get(toSave), row.names = FALSE, sep = "\t", quote = FALSE, file=file.path(ddir, paste(toSave, ".txt", sep="")))
+
+# write.table(Orphanet_sourceFiles, file=file.path(ddir, paste(toSave, ".txt", sep="")), sep = "\t")
 

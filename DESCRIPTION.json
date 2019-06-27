@@ -6,21 +6,29 @@
 	"version": "0.2",
 	"source files": [
 	    	{
-			"name":"Orphanet Rare Disease Ontology/ordo_orphanet.owl.zip",
+			"name":"Orphanet Rare Disease Ontology/en_product1.json",
 			"URL template":"https://github.com/Orphanet/Orphadata.org",
 			"remote update frequency": {
 				"value": 0,
 				"units": "1/month"
 			}
 		},
-	    	{
+	    {
 			"name":"ORDO_releaseNotes2.5.txt",
 			"URL template":"http://www.orphadata.org/data/ORDO/ORDO_releaseNotes2.5.txt",
 			"remote update frequency": {
 				"value": 0,
 				"units": "1/day"
 			}
-		}	    
+		},
+	    {
+			"name":"EpidemiologicalData_Orphanet.xml",
+			"URL template":"https://github.com/Orphanet/Orphadata.org",
+			"remote update frequency": {
+				"value": 0,
+				"units": "1/day"
+			}
+		}		
 	]
 
 }

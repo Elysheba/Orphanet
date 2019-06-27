@@ -1,8 +1,7 @@
 rm(list = ls())
 gc()
 
-setwd("~/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/scripts/")
-
+library(here)
 library(XML)
 library(parallel)
 library(jsonlite)
@@ -12,7 +11,7 @@ library(here)
 library(tibble)
 library(tidyr)
 library(dplyr)
-source("../../00-Utils/writeLastUpdate.R")
+source(here("..","00-Utils/writeLastUpdate.R"))
 
 ##
 mc.cores <- 55
@@ -38,27 +37,29 @@ sfi_name <- unlist(lapply(
 ###############################################################################@
 ## Convert OWL to JSON
 Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
-system(paste("robot convert --input ",file.path(sdir,"orphanet/ordo_orphanet.owl/ordo_orphanet.owl"),
-             " --output ",file.path(sdir,"orphanet/ordo_orphanet.owl/ordo_orphanet.json"), sep = ""))
+system(paste("robot convert --input ",file.path("../sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.7.owl"),
+             " --output ",file.path("../sources/ORDO_en_2.7.json"), sep = ""))
 
-readJson <- jsonlite::fromJSON(txt = "../sources/orphanet/ordo_orphanet.owl/ordo_orphanet.json")
+# readJson <- jsonlite::fromJSON(txt = "../sources/orphanet/Disorders cross referenced JSON/en_product1.json")
+readJson <- jsonlite::fromJSON(txt = "../sources/ORDO_en_2.7.json")
 
-propJson <- do.call(rbind,
-                    lapply(1:nrow(readJson$graphs$nodes[[1]]),
-                           function(i){
-                             if(readJson$graphs$nodes[[1]]$type[[i]] == "PROPERTY" & !is.na(readJson$graphs$nodes[[1]]$type[[i]])){
-                               data.frame(id = readJson$graphs$nodes[[1]]$id[[i]],
-                                          type = readJson$graphs$nodes[[1]]$type[[i]],
-                                          lbl = readJson$graphs$nodes[[1]]$lbl[[i]],
-                                          stringsAsFactors = F)
-                             }else{
-                               NULL}
-                           }))
-
-checkJson <- unique(unlist(lapply(readJson$graphs$nodes[[1]]$meta$basicPropertyValues,function(x) x$pred)))
-checkJson
-checkJson <- do.call(rbind,lapply(readJson$graphs$nodes[[1]]$meta$basicPropertyValues,function(x) x))
-table(checkJson$val[grep("\\bdefinition_citation\\b",checkJson$pred)])
+# propJson <- do.call(rbind,
+#                     lapply(1:nrow(readJson$graphs$nodes[[1]]),
+#                            function(i){
+#                              if(readJson$graphs$nodes[[1]]$type[[i]] == "PROPERTY" & !is.na(readJson$graphs$nodes[[1]]$type[[i]])){
+#                                data.frame(id = readJson$graphs$nodes[[1]]$id[[i]],
+#                                           type = readJson$graphs$nodes[[1]]$type[[i]],
+#                                           lbl = readJson$graphs$nodes[[1]]$lbl[[i]],
+#                                           stringsAsFactors = F)
+#                              }else{
+#                                NULL}
+#                            }))
+# 
+# 
+# checkJson <- unique(unlist(lapply(readJson$graphs$nodes[[1]]$meta$basicPropertyValues,function(x) x$pred)))
+# checkJson
+# checkJson <- do.call(rbind,lapply(readJson$graphs$nodes[[1]]$meta$basicPropertyValues,function(x) x))
+# table(checkJson$val[grep("\\bdefinition_citation\\b",checkJson$pred)])
 
 ###########################################
 ## nodes (id, def, name, xref, label)
@@ -107,9 +108,16 @@ syn <- do.call(rbind,lapply(nodesJson,function(x) x$syn))
 
 ## edges (parents)
 edgesJson <- readJson$graphs$edges[[1]]
-edgesJson <- edgesJson[which(edgesJson$pred %in% c("is_a")),]
+##
+functMut <- edgesJson[grepl(paste("Orphanet_410296","Orphanet_410295", sep = "|"), edgesJson$pred),]
+save(functMut, file = here("sources/Orphanet2gene.rda"))
+##
+edgesJson <- edgesJson[which(edgesJson$pred %in% c("is_a", "http://purl.obolibrary.org/obo/BFO_0000050")),]
 edgesJson <- as.data.frame(apply(edgesJson,2,function(x) gsub(".*ORDO/Orphanet_","ORPHA:",x)), 
                            stringsAsFactors = FALSE)
+edgesJson$pred[edgesJson$pred == "http://purl.obolibrary.org/obo/BFO_0000050"] <- "BFO_0000050"
+head(edgesJson)
+
 dim(edgesJson)
 getDescendants <- function(sp){
   direct <- edgesJson[which(edgesJson$obj==sp),"sub"]
@@ -224,9 +232,7 @@ head(entryId[entryId$def == "",])
 
 ## Check characters for \t, \n, \r and put to ASCII
 entryId$def <- iconv(x = entryId$def,to="ASCII//TRANSLIT")
-table(unlist(sapply(entryId$def, strsplit, split = "")))
 entryId$def <- gsub(paste("\n","\t","\r", sep = "|")," ",entryId$def)
-table(unlist(sapply(entryId$def, strsplit, split = "")))
 entryId$def <- gsub("\"","'",entryId$def)
 table(unlist(sapply(entryId$def, strsplit, split = "")))
 
@@ -265,9 +271,7 @@ dim(idNames)
 
 ## Check characters for \t, \n, \r and put to ASCII
 idNames$syn <- iconv(x = idNames$syn,to="ASCII//TRANSLIT")
-table(unlist(sapply(idNames$syn, strsplit, split = "")))
 idNames$syn <- gsub(paste("\n","\t","\r", sep = "|")," ",idNames$syn)
-table(unlist(sapply(idNames$syn, strsplit, split = "")))
 idNames$syn <- gsub("\"","'",idNames$syn)
 table(unlist(sapply(idNames$syn, strsplit, split = "")))
 
@@ -292,6 +296,7 @@ table(gsub(":.*","",parentId$obj))
 names(parentId) <- c("id","parent")
 parentId$DB <- gsub(":.*","",parentId$id)
 parentId$pDB <- gsub(":.*","",parentId$parent)
+dim(parentId)
 
 ## all parentId in entryId
 table(parentId$id %in% entryId$id)
@@ -342,3 +347,4 @@ writeLastUpdate()
 ##############################################################
 ## Check model
 source("../../00-Utils/autoCheckModel.R")
+
