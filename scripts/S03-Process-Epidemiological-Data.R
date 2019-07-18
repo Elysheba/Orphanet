@@ -97,6 +97,9 @@ orParse <- do.call(
            },
            BPPARAM = bpparam)
 )
+## Some Ids have no prevalence information --> remove
+orParse <- orParse %>%
+  filter(!is.na(prevalenceSource))
 message(Sys.time())
 message("... Done \n")
 
