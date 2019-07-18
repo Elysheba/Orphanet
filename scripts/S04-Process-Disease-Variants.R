@@ -1,6 +1,6 @@
 ##############################################################
 ##############################################################
-## Epidemiological data
+## Orphanet disease variants
 ##############################################################
 ##############################################################
 
@@ -8,6 +8,7 @@ library(here)
 library(BiocParallel)
 library(XML)
 library(tidyverse)
+library(BED)
 
 # source(here("scripts/clinVar-Functions.R"))
 
@@ -50,49 +51,51 @@ readOrpha <- function(file, n=-1L){
 ## _+ Loading and parsing XML ----
 message("Loading XML...")
 message(Sys.time())
-xmlFile <- file.path(sdir, "orphanet/Epidemiological data/Rare disease epidemiology/en_product9_prev.xml")
-orList <- readOrpha(xmlFile) #, n=100000) # total: >37210660
-encoding <- attr(orList, "encoding")
+xmlFile <- file.path(sdir, "orphanet/Disorders with their associated genes/en_product6.xml")
+geneList <- readOrpha(xmlFile) #, n=100000) # total: >37210660
+encoding <- attr(geneList, "encoding")
 message(Sys.time())
 message("... Done\n")
+
+or <- geneList[[1]]
 
 message("Parsing XML file ...")
 message(Sys.time())
 orParse <- do.call(
   rbind,
-  bplapply(orList,
+  bplapply(geneList,
            function(or){
              orpa <- xmlRoot(xmlParse(or, encoding = encoding))
              orphaNb <- xmlValue(orpa[["OrphaNumber"]])
              orphaName <- xmlValue(orpa[["Name"]])
-             disType <- xmlValue(orpa[["DisorderType"]][["Name"]])
              # nbPrev <- as.integer(xmlAttrs(a[["PrevalenceList"]]))
              prevList <- do.call(
                rbind,
-               lapply(xmlChildren(orpa[["PrevalenceList"]]),
-                      function(x){
-                        source <- xmlValue(x[["Source"]])
-                        prevalenceType <- xmlValue(x[["PrevalenceType"]][["Name"]])
-                        prevalenceQualification <- xmlValue(x[["PrevalenceQualification"]][["Name"]])
-                        prevalenceClass <- xmlValue(x[["PrevalenceClass"]][["Name"]])
-                        prevalenceGeo <- xmlValue(x[["PrevalenceGeographic"]][["Name"]])
-                        prevalenceVal <- xmlValue(x[["PrevalenceValidationStatus"]][["Name"]])
-                        valMoy <- xmlValue(x[["ValMoy"]])
-                        toRet <- tibble(prevalenceSource = source,
-                                        prevalenceType = prevalenceType,
-                                        prevalenceQualification = prevalenceQualification,
-                                        prevalenceGeographic = prevalenceGeo,
-                                        prevalenceClass = prevalenceClass,
-                                        prevalenceValidationStatus = prevalenceVal,
-                                        prevalenceValue = valMoy)
+               lapply(xmlChildren(orpa[["DisorderGeneAssociationList"]]),
+                      function(ol){
+                        sourceOfValidation <- xmlValue(ol[["SourceOfValidation"]])
+                        extRefList <- do.call(rbind,
+                                              lapply(xmlChildren(ol[["Gene"]][["ExternalReferenceList"]]),
+                                                     function(gid){
+                                                       toRet <- tibble(source = xmlValue(gid[["Source"]]),
+                                                                       id = xmlValue(gid[["Reference"]]))
+                                                     })
+                        ) 
+                        geneId <- filter(extRefList, source == "Ensembl")
+                        # geneId <- xmlValue(ol[["ExternalReferenceList"]][["ExternalReference"]])
+                        associationType <- xmlValue(ol[["DisorderGeneAssociationType"]])
+                        associationStatus <- xmlValue(ol[["DisorderGeneAssociationStatus"]])
+                        toRet <- tibble(prevalenceSource = sourceOfValidation,
+                                        Ens_gene = geneId$id,
+                                        associationType = associationType,
+                                        associationStatus = associationStatus)
                         return(toRet)
                       })
              )
              toRet <- mutate(prevList,
                              id = orphaNb,
                              DB = "ORPHA",
-                             label = orphaName,
-                             type = disType) 
+                             label = orphaName) 
              return(toRet)
            },
            BPPARAM = bpparam)
@@ -105,7 +108,7 @@ message("... Done \n")
 
 write.table(
   orParse,
-  file= here("data","Orphanet_EpidemiologicalDiseaseInfo.txt"),
+  file= here("data","Orphanet_DiseaseVariants.txt"),
   sep="\t",
   row.names=FALSE, col.names=TRUE,
   quote=TRUE,

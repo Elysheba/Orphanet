@@ -15,13 +15,13 @@ source(here("..","00-Utils/writeLastUpdate.R"))
 
 ##
 mc.cores <- 55
-sdir <- "../sources"
-ddir <- "../data"
+sdir <- "./sources"
+ddir <- "./data"
 
 ###############################################################################@
 ## Source information ----
 ###############################################################################@
-desc <- RJSONIO::readJSONStream("../DESCRIPTION.json")
+desc <- RJSONIO::readJSONStream("./DESCRIPTION.json")
 
 sourceFiles <- desc$"source files"
 sfi_name <- unlist(lapply(
@@ -37,11 +37,11 @@ sfi_name <- unlist(lapply(
 ###############################################################################@
 ## Convert OWL to JSON
 Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
-system(paste("robot convert --input ",file.path("../sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.7.owl"),
-             " --output ",file.path("../sources/ORDO_en_2.7.json"), sep = ""))
+system(paste("robot convert --input ",file.path("./sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.7.owl"),
+             " --output ",file.path("./sources/ORDO_en_2.7.json"), sep = ""))
 
 # readJson <- jsonlite::fromJSON(txt = "../sources/orphanet/Disorders cross referenced JSON/en_product1.json")
-readJson <- jsonlite::fromJSON(txt = "../sources/ORDO_en_2.7.json")
+readJson <- jsonlite::fromJSON(txt = "./sources/ORDO_en_2.7.json")
 
 # propJson <- do.call(rbind,
 #                     lapply(1:nrow(readJson$graphs$nodes[[1]]),
@@ -304,6 +304,42 @@ table(parentId$parent %in% entryId$id)
 ## "Phenome" not in entryId --> OK
 parentId[!(parentId$parent %in% entryId$id),]
 
+## Add levels
+getAncestors <- function(id){
+  direct <- termParents[[id]]
+  parents <- direct
+  level <- 0
+  dLev <- c()
+  for(d in direct){
+    dPar <- getAncestors(d)
+    dLev <- c(dLev, dPar$level)
+    parents <- c(parents, dPar$parents)
+  }
+  if(length(dLev)>0){
+    level <- max(dLev)+1
+  }
+  return(list(parents=unique(parents), level=level))
+}
+
+parentList <- unstack(parentId, parent~id)
+termParents <- parentList
+library(BiocParallel)
+bpparam <- MulticoreParam(workers = 30)
+
+termAncestors <- bplapply(
+  parentId$id,
+  getAncestors,
+  BPPARAM = bpparam
+)
+names(termAncestors) <- parentId$id
+
+entryId <- entryId %>%
+  mutate(
+    level=unlist(lapply(termAncestors, function(x) x$level))[entryId$id]
+  ) %>%
+  mutate(level = case_when(is.na(level) ~ 0,
+                           TRUE ~ level))
+
 #######################################
 crossId$id1 <- gsub(".*:","",crossId$id1)
 crossId$id2 <- gsub(".*:","",crossId$id2)
@@ -313,7 +349,7 @@ idNames$id <- gsub(".*:","",idNames$id)
 parentId$parent <- gsub(".*:","",parentId$parent)
 
 Orphanet_crossId <- crossId[,c("DB1","id1","DB2","id2")]
-Orphanet_entryId <- entryId[,c("DB","id","def")]
+Orphanet_entryId <- entryId[,c("DB","id","def","level")]
 Orphanet_idNames <- idNames[,c("DB","id","syn","canonical")]
 Orphanet_parentId <- parentId[c("DB","id","pDB","parent")]
 
@@ -346,5 +382,5 @@ writeLastUpdate()
 
 ##############################################################
 ## Check model
-source("../../00-Utils/autoCheckModel.R")
+source("../00-Utils/autoCheckModel.R")
 

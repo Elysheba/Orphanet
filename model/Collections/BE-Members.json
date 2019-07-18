@@ -1,0 +1,28 @@
+{
+	"collection":"BE",
+	"resource":"Orphanet",
+	"tables":[
+		{
+			"name":"Orphanet_DiseaseVariants",
+			"fields":{
+				"be": {
+					"static":true,
+					"value":"Gene"
+				},
+				"source": {
+					"static":true,
+					"value":"Ens_gene1"
+				},
+				"organism": {
+					"static":true,
+					"type":"Scientific name",
+					"value":"Homo sapiens"
+				},
+				"identifier": {
+					"static":false,
+					"value":"Ens_gene"
+				}
+			}
+		}
+	]
+}

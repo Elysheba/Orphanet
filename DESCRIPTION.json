@@ -28,7 +28,15 @@
 				"value": 0,
 				"units": "1/day"
 			}
-		}		
+		},
+	    {
+			"name":"DiseaseVariants_Orphanet.xml",
+			"URL template":"https://github.com/Orphanet/Orphadata.org",
+			"remote update frequency": {
+				"value": 0,
+				"units": "1/day"
+			}
+		}			
 	]
 
 }
