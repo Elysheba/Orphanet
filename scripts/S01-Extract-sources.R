@@ -51,8 +51,8 @@ sfi_name <- unlist(lapply(
   }
 ))
 
-# unzip(zipfile = file.path(srcDir,sfi_name[[1]]), 
-#       exdir = file.path(srcDir,"ordo_orphanet.owl"), 
+# unzip(zipfile = file.path(srcDir,sfi_name[[1]]),
+#       exdir = file.path(srcDir,"ordo_orphanet.owl"),
 #       overwrite = TRUE)
 
 ###############################################

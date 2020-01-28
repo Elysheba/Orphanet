@@ -21,7 +21,7 @@ ddir <- "./data"
 ###############################################################################@
 ## Source information ----
 ###############################################################################@
-desc <- RJSONIO::readJSONStream("./DESCRIPTION.json")
+desc <- RJSONIO::readJSONStream(here("DESCRIPTION.json"))
 
 sourceFiles <- desc$"source files"
 sfi_name <- unlist(lapply(
@@ -36,12 +36,14 @@ sfi_name <- unlist(lapply(
 ## Data from ordo_orphanet_owl
 ###############################################################################@
 ## Convert OWL to JSON
-Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
-system(paste("robot convert --input ",file.path("./sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.7.owl"),
-             " --output ",file.path("./sources/ORDO_en_2.7.json"), sep = ""))
+# Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
+
+# system(paste("robot convert --input ",
+#              file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl"),
+#              " --output ",file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/ORDO_en_2.9.json"), sep = ""))
 
 # readJson <- jsonlite::fromJSON(txt = "../sources/orphanet/Disorders cross referenced JSON/en_product1.json")
-readJson <- jsonlite::fromJSON(txt = "./sources/ORDO_en_2.7.json")
+readJson <- jsonlite::fromJSON(txt = here("sources/ORDO_en_2.9.json"))
 
 # propJson <- do.call(rbind,
 #                     lapply(1:nrow(readJson$graphs$nodes[[1]]),
@@ -63,45 +65,71 @@ readJson <- jsonlite::fromJSON(txt = "./sources/ORDO_en_2.7.json")
 
 ###########################################
 ## nodes (id, def, name, xref, label)
-nodesJson <- lapply(1:nrow(readJson$graphs$nodes[[1]]),
+nodesJson <- plyr::compact(
+  lapply(1:nrow(readJson$graphs$nodes[[1]]),
                     function(i){
-                      id <- gsub("Orphanet_","ORPHA:",gsub(".*/","",readJson$graphs$nodes[[1]]$id[[i]])) 
+                      print(i)
+                      id <- paste("ORPHA",
+                                  gsub(".*Orphanet_", "", readJson$graphs$nodes[[1]]$id[i]),
+                                  sep = ":") 
+                      lbl <- readJson$graphs$nodes[[1]]$lbl[i]
                       descr <- readJson$graphs$nodes[[1]]$meta$basicPropertyValues[[i]]
-                      def <- setdiff(descr[grep("definition",descr$pred),c("val")],"orphanet")
-                      name <- descr[grep("alternative_term",descr$pred),c("val")]
-                      Xref <-  unlist(readJson$graphs$nodes[[1]]$meta$xrefs[[i]])
-                      if(length(def) == 0){
-                        df1 <- data.frame(
-                          id = id,
-                          def = NA,
-                          label = readJson$graphs$nodes[[1]]$lbl[[i]],
-                          stringsAsFactors = FALSE)
-                      }else{
-                        df1 <- data.frame(
+                      # ## if record is obsolete, return nothing 
+                      # if(grepl("OBSOLETE", lbl)){ #|| any(grepl("Orphanet_#symbol", descr$pred))){ 
+                      #   return(
+                      #     list(id = NULL,
+                      #          xref = NULL,
+                      #          syn = NULL))
+                      # }else{
+                        ## def 
+                        if(any(grepl("^http://www.ebi.ac.uk/efo/definition$", descr$pred))){
+                          def <- descr %>% 
+                            filter(grepl("^http://www.ebi.ac.uk/efo/definition$", pred)) %>% 
+                            pull(val)
+                        }else{
+                          def <- NA
+                        }
+                        ## syn
+                        if(any(!grepl("^http://www.ebi.ac.uk/efo/definition$", descr$pred))){
+                          syn <- descr %>% 
+                            filter(!grepl(paste("http://www.w3.org/2004/02/skos/core#notation", 
+                                                "http://www.ebi.ac.uk/efo/definition", sep = "|"),
+                                          pred)) %>% pull(val)
+                        }else{
+                          syn <- NA
+                        }
+                        ## xref
+                        Xref <- readJson$graphs$nodes[[1]]$meta$xrefs[[i]]
+                        ##
+                        df1 <- tibble(
                           id = id,
                           def = def,
-                          label = readJson$graphs$nodes[[1]]$lbl[[i]],
-                          stringsAsFactors = FALSE)
+                          label = lbl) %>% 
+                          distinct()
+                        
+                        if(length(Xref) == 0){
+                          df2 <- tibble(id = character(),
+                                        Xref = character())
+                        }else{
+                          df2 <- tibble(
+                            id = id,
+                            Xref = Xref$val) %>%
+                            distinct()
+                        }
+                        if(length(syn) == 0){
+                          df3 <- tibble(id = character(),
+                                        syn = character())
+                        }else{
+                          df3 <- tibble(
+                            id = id,
+                            syn = syn) %>% 
+                            distinct()
+                        }
+                        return(list(id = df1,xref = df2,syn = df3))
                       }
-                      if(length(Xref) == 0){
-                        df2 <- NULL
-                      }else{
-                        df2 <- data.frame(
-                          id = id,
-                          Xref = Xref,
-                          stringsAsFactors = FALSE)
-                      }
-                      if(length(name) == 0){
-                        df3 <- NULL
-                      }else{
-                        df3 <- data.frame(
-                          id = id,
-                          syn = name,
-                          stringsAsFactors = FALSE)
-                      }
-                      return(list(id = df1,xref = df2,syn = df3))
-                    }
+                    # }
              )
+)
 id <- do.call(rbind,lapply(nodesJson,function(x){x$id} ))
 xref <- do.call(rbind,lapply(nodesJson,function(x) x$xref))
 syn <- do.call(rbind,lapply(nodesJson,function(x) x$syn))
@@ -109,7 +137,16 @@ syn <- do.call(rbind,lapply(nodesJson,function(x) x$syn))
 ## edges (parents)
 edgesJson <- readJson$graphs$edges[[1]]
 ##
-functMut <- edgesJson[grepl(paste("Orphanet_410296","Orphanet_410295", sep = "|"), edgesJson$pred),]
+functMut <- edgesJson[grepl(paste("Orphanet_465410", 
+                                  "Orphanet_410296",
+                                  "Orphanet_410295",
+                                  "Orphanet_327767",
+                                  "Orphanet_317349", 
+                                  "Orphanet_317348", 
+                                  "Orphanet_317346", 
+                                  "Orphanet_317345", 
+                                  "Orphanet_317344",
+                                  "Orphanet_317343", sep = "|"), edgesJson$pred),]
 save(functMut, file = here("sources/Orphanet2gene.rda"))
 ##
 edgesJson <- edgesJson[which(edgesJson$pred %in% c("is_a", "http://purl.obolibrary.org/obo/BFO_0000050")),]
@@ -145,7 +182,7 @@ unique(grep("http",edgesJson$obj[edgesJson$sub %in% disease$descendants],value =
 
 ######################################
 ## crossId
-crossId <- xref[xref$id %in% disease$descendants,]
+crossId <- xref[xref$id %in% disease$descendants,] %>% as_tibble()
 head(crossId)
 dim(crossId)
 names(crossId) <- c("dbid1","dbid2")
@@ -217,7 +254,8 @@ dim(crossId)
 
 ######################################
 ## entryId
-entryId <- id[id$id %in% disease$descendants,]
+entryId <- id[id$id %in% disease$descendants,] %>% as_tibble()
+entryId
 table(gsub(":.*","",entryId$id))
 entryId <- entryId[grep(":",entryId$id),,drop = FALSE]
 table(gsub(":.*","",entryId$id))
@@ -226,6 +264,7 @@ head(entryId)
 entryId <- entryId[,c("DB","id","def")]
 unique(grep("#",entryId$id, value =T))
 ## Empty definition to NA
+head(sort(table(nchar(entryId$def))))
 tail(sort(table(nchar(entryId$def))))
 head(entryId[entryId$def == "",])
 # entryId$def <- ifelse(entryId$def == "",NA,entryId$def)
@@ -287,6 +326,11 @@ idNames[which(nc == 0),]
 idNames[which(nc == 1),]
 # idNames <- idNames[-which(nc == 0),]
 
+## Not every ID has a definition available, in this case, the canonical label will be used
+tmp <- idNames %>% filter(canonical)
+entryId <- entryId %>% 
+  mutate(def = case_when(is.na(def) ~ tmp$syn[match(id,tmp$id)],
+                         TRUE ~ def))
 
 ######################################
 ## parentId
@@ -296,6 +340,7 @@ table(gsub(":.*","",parentId$obj))
 names(parentId) <- c("id","parent")
 parentId$DB <- gsub(":.*","",parentId$id)
 parentId$pDB <- gsub(":.*","",parentId$parent)
+parentId$origin <- "ORPHA"
 dim(parentId)
 
 ## all parentId in entryId
@@ -351,7 +396,7 @@ parentId$parent <- gsub(".*:","",parentId$parent)
 Orphanet_crossId <- crossId[,c("DB1","id1","DB2","id2")]
 Orphanet_entryId <- entryId[,c("DB","id","def","level")]
 Orphanet_idNames <- idNames[,c("DB","id","syn","canonical")]
-Orphanet_parentId <- parentId[c("DB","id","pDB","parent")]
+Orphanet_parentId <- parentId[c("DB","id","pDB","parent","origin")]
 
 ######################################
 ## Writing tables
@@ -361,7 +406,7 @@ message(Sys.time())
 toSave <- grep("^Orphanet_",ls(),value = T)
 for(f in toSave){
   message(paste("Saving", f))
-  print(file.path(ddir, paste(f, ".txt", sep="")))
+  print(here("data", paste(f, ".txt", sep="")))
   ## Ensure unicity
   assign(f, get(f))
   if(length(names(f))==0){
@@ -370,17 +415,10 @@ for(f in toSave){
   ##
   write.table(
     get(f),
-    file=file.path(ddir, paste(f, ".txt", sep="")),
+    file=here("data", paste(f, ".txt", sep="")),
     sep="\t",
     row.names=FALSE, col.names=TRUE,
     quote=TRUE,
     qmethod = "double"
   )
 }
-
-writeLastUpdate()
-
-##############################################################
-## Check model
-source("../00-Utils/autoCheckModel.R")
-

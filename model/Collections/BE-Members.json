@@ -11,7 +11,7 @@
 				},
 				"source": {
 					"static":true,
-					"value":"Ens_gene1"
+					"value":"Ens_gene"
 				},
 				"organism": {
 					"static":true,

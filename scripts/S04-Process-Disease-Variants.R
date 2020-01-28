@@ -22,7 +22,8 @@ ddir <- here("data")
 ###############################################################################@
 
 readOrpha <- function(file, n=-1L){
-  orRaw <- readLines(file, n=n)
+  orRaw <- readLines(con <- file(file, encoding = "latin1"), n=n)
+  ## Issue with encoding, normally Latin-1 = ISO-8859-1, but it doesn't take all code
   encoding <- sub(
     "\".*$",
     "",
@@ -105,7 +106,6 @@ message("... Done \n")
 
 ###############################################################################@
 ## Writing file
-
 write.table(
   orParse,
   file= here("data","Orphanet_DiseaseVariants.txt"),
