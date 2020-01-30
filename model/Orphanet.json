@@ -1,0 +1,564 @@
+{
+  "Orphanet_entryId": {
+    "tableName": ["Orphanet_entryId"],
+    "fields": [
+      {
+        "name": "DB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Name original database/ontology"
+      },
+      {
+        "name": "id",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Disease ontology identifier from Orphanet"
+      },
+      {
+        "name": "def",
+        "type": "character",
+        "nullable": true,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "level",
+        "type": "integer",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      }
+    ],
+    "primaryKey": ["DB", "id"],
+    "foreignKeys": {},
+    "indexes": [
+      {
+        "fields": ["DB", "id"],
+        "unique": [true]
+      }
+    ],
+    "display": {
+      "x": [-72],
+      "y": [-76],
+      "color": ["NA"],
+      "comment": ["NA"]
+    }
+  },
+  "Orphanet_crossId": {
+    "tableName": ["Orphanet_crossId"],
+    "fields": [
+      {
+        "name": "DB1",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Name database for id1"
+      },
+      {
+        "name": "id1",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "disease ontology identifier"
+      },
+      {
+        "name": "DB2",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Name database id2"
+      },
+      {
+        "name": "id2",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Crossreference disease ontology id to id1"
+      }
+    ],
+    "primaryKey": ["DB1", "id1"],
+    "foreignKeys": [
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "DB1",
+            "to": "DB"
+          },
+          {
+            "from": "id1",
+            "to": "id"
+          }
+        ],
+        "cardinality": [0, -1, 1, 1]
+      }
+    ],
+    "indexes": [
+      {
+        "fields": ["DB1", "id1"],
+        "unique": [true]
+      }
+    ],
+    "display": {
+      "x": [-68],
+      "y": [197],
+      "color": ["NA"],
+      "comment": ["NA"]
+    }
+  },
+  "Orphanet_parentId": {
+    "tableName": ["Orphanet_parentId"],
+    "fields": [
+      {
+        "name": "DB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Database for id"
+      },
+      {
+        "name": "id",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Disease ontology identifier from Orphanet"
+      },
+      {
+        "name": "pDB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Name database for parent id"
+      },
+      {
+        "name": "parent",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Parent ontology for id in Monarch Disease Ontology "
+      },
+      {
+        "name": "origin",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      }
+    ],
+    "primaryKey": ["DB", "id"],
+    "foreignKeys": [
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "DB",
+            "to": "DB"
+          },
+          {
+            "from": "id",
+            "to": "id"
+          }
+        ],
+        "cardinality": [0, -1, 1, 1]
+      },
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "pDB",
+            "to": "DB"
+          },
+          {
+            "from": "parent",
+            "to": "id"
+          }
+        ],
+        "cardinality": [0, -1, 1, 1]
+      }
+    ],
+    "indexes": [
+      {
+        "fields": ["parent", "pDB"],
+        "unique": [false]
+      },
+      {
+        "fields": ["DB", "id"],
+        "unique": [true]
+      }
+    ],
+    "display": {
+      "x": [-216],
+      "y": [-221],
+      "color": ["NA"],
+      "comment": ["NA"]
+    }
+  },
+  "Orphanet_idNames": {
+    "tableName": ["Orphanet_idNames"],
+    "fields": [
+      {
+        "name": "DB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Name original database"
+      },
+      {
+        "name": "id",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Disease ontology identifier from Orphanet"
+      },
+      {
+        "name": "syn",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Term (synonym or label) to describe the disease"
+      },
+      {
+        "name": "canonical",
+        "type": "logical",
+        "nullable": false,
+        "unique": false,
+        "comment": "Current label for the entry"
+      }
+    ],
+    "primaryKey": ["DB", "id"],
+    "foreignKeys": [
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "DB",
+            "to": "DB"
+          },
+          {
+            "from": "id",
+            "to": "id"
+          }
+        ],
+        "cardinality": [0, -1, 1, 1]
+      }
+    ],
+    "indexes": [
+      {
+        "fields": ["DB", "id"],
+        "unique": [true]
+      }
+    ],
+    "display": {
+      "x": [66],
+      "y": [-315],
+      "color": ["NA"],
+      "comment": ["NA"]
+    }
+  },
+  "Orphanet_sourceFiles": {
+    "tableName": ["Orphanet_sourceFiles"],
+    "fields": [
+      {
+        "name": "url",
+        "type": "character",
+        "nullable": false,
+        "unique": true,
+        "comment": "URL location of source files"
+      },
+      {
+        "name": "current",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Date of the current version of the source files"
+      }
+    ],
+    "primaryKey": ["url"],
+    "foreignKeys": {},
+    "indexes": [
+      {
+        "fields": ["url"],
+        "unique": [true]
+      }
+    ],
+    "display": {
+      "x": [315],
+      "y": [315],
+      "color": ["NA"],
+      "comment": ["NA"]
+    }
+  },
+  "Orphanet_EpidemiologicalDiseaseInfo": {
+    "tableName": ["Orphanet_EpidemiologicalDiseaseInfo"],
+    "fields": [
+      {
+        "name": "DB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Ontology database (private key)"
+      },
+      {
+        "name": "id",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Concept identifier (private key)"
+      },
+      {
+        "name": "type",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Type of concept (Biological anomaly, Clinical subtype, Clinical syndrome, Disease, Etiological subtype, Group of phenomes, Histopathological subtype, Malformation syndrome, Morphological anomaly, Particular clinical situation in a disease or syndrome )"
+      },
+      {
+        "name": "prevalenceType",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Type of prevalence presented:\\nPoint prevalence: Number of cases scaled up to the general population at a given time. \\n\\nBirth prevalence: Number of cases observed at birth relative to the number of children born alive at a given moment.\\n\\nAnnual incidence: Number of newly diagnosed cases in a population in one year. \\n\\nLifetime prevalence: Number of cases presenting or having presented the clinical entity during their lifetime scaled up to the general population. \\nCases/families: Number of cases or family (ies) published in the literature."
+      },
+      {
+        "name": "prevalenceQualification",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Identication on the type of information available: prevalenceClass and/or prevalenceValue"
+      },
+      {
+        "name": "prevalenceGeographic",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Geographic location of prevalence information"
+      },
+      {
+        "name": "prevalenceClass",
+        "type": "character",
+        "nullable": true,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "prevalenceValue",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Value of prevalence: in case of case this is the number of cases per geographic location"
+      },
+      {
+        "name": "prevalenceValidationStatus",
+        "type": "character",
+        "nullable": true,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "prevalenceSource",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "label",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      }
+    ],
+    "primaryKey": ["DB", "id"],
+    "foreignKeys": [
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "DB",
+            "to": "DB"
+          },
+          {
+            "from": "id",
+            "to": "id"
+          }
+        ],
+        "cardinality": [0, -1, 1, 1]
+      }
+    ],
+    "indexes": [
+      {
+        "fields": ["DB", "id"],
+        "unique": [true]
+      }
+    ],
+    "display": {
+      "x": [-315],
+      "y": [56],
+      "color": ["NA"],
+      "comment": ["NA"]
+    }
+  },
+  "Orphanet_DiseaseVariants": {
+    "tableName": ["Orphanet_DiseaseVariants"],
+    "fields": [
+      {
+        "name": "DB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "id",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "label",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "prevalenceSource",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "Ens_gene",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "associationType",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      },
+      {
+        "name": "associationStatus",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": ""
+      }
+    ],
+    "primaryKey": ["DB", "id"],
+    "foreignKeys": [
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "DB",
+            "to": "DB"
+          },
+          {
+            "from": "id",
+            "to": "id"
+          }
+        ],
+        "cardinality": [0, -1, 1, 1]
+      }
+    ],
+    "indexes": [
+      {
+        "fields": ["DB", "id"],
+        "unique": [true]
+      }
+    ],
+    "display": {
+      "x": [203],
+      "y": [-67],
+      "color": ["NA"],
+      "comment": ["NA"]
+    }
+  },
+  "Orphanet_HPO": {
+    "tableName": ["Orphanet_HPO"],
+    "fields": [
+      {
+        "name": "phenoDB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Phenotype database"
+      },
+      {
+        "name": "pheno",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Phenotype identifier"
+      },
+      {
+        "name": "DB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Database ontology"
+      },
+      {
+        "name": "id",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Orphanet identifier"
+      },
+      {
+        "name": "hpoName",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Label of HPO term"
+      },
+      {
+        "name": "hpoFreq",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Frequency of the phenotype occurring"
+      },
+      {
+        "name": "label",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Orphanet label"
+      }
+    ],
+    "foreignKeys": [
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "DB",
+            "to": "DB"
+          },
+          {
+            "from": "id",
+            "to": "id"
+          }
+        ],
+        "cardinality": [0, -1, 1, 1]
+      }
+    ],
+    "indexes": {},
+    "display": {
+      "x": [221],
+      "y": [116],
+      "color": ["NA"],
+      "comment": ["Orphanet to HPO mapping"]
+    }
+  }
+}

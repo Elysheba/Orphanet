@@ -11,12 +11,18 @@ library(here)
 library(tibble)
 library(tidyr)
 library(dplyr)
-source(here("..","00-Utils/writeLastUpdate.R"))
-
+# source(here("..","00-Utils/writeLastUpdate.R"))
+library(ReDaMoR)
 ##
 mc.cores <- 55
 sdir <- "./sources"
 ddir <- "./data"
+
+###############################################################################@
+## Data model ----
+###############################################################################@
+# dm <- model_relational_data()
+# save(dm, file = here("model", "Orphanet.rda"))
 
 ###############################################################################@
 ## Source information ----
@@ -31,6 +37,12 @@ sfi_name <- unlist(lapply(
     return(toRet)
   }
 ))
+
+###############################################################################@
+## Data model
+###############################################################################@
+# dm <- model_relational_data()
+# save(dm, file = here("model", "Orphanet.rda"))
 
 ###############################################################################@
 ## Data from ordo_orphanet_owl
