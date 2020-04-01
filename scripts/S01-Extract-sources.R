@@ -6,6 +6,7 @@ source("../../00-Utils/downloadSourceFiles.R")
 library(tibble)
 library(dplyr)
 
+
 ############################
 ## JSON file
 desc <- readJSONStream("../DESCRIPTION.json")
@@ -21,15 +22,15 @@ urls <- unlist(lapply(
 ))
 srcDir <- "../sources/orphanet"
 
-gitRepo <- urls[1]
-
-## Clone or pull git repository
-if(!dir.exists(srcDir)){
-  gitRepo <- git2r::clone(url = gitRepo, local_path = srcDir)
-}else{
-  gitRepo <- git2r::repository(srcDir)
-  git2r::pull(gitRepo)
-}
+# gitRepo <- urls[1]
+# 
+# ## Clone or pull git repository
+# if(!dir.exists(srcDir)){
+#   gitRepo <- git2r::clone(url = gitRepo, local_path = srcDir)
+# }else{
+#   gitRepo <- git2r::repository(srcDir)
+#   git2r::pull(gitRepo)
+# }
 
 # downloadSourceFiles(urls, srcDir)
 # if(!file.exists("../sources/ordo_orphanet.owl")){

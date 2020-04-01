@@ -32,7 +32,6 @@
       }
     ],
     "primaryKey": ["DB", "id"],
-    "foreignKeys": {},
     "indexes": [
       {
         "fields": ["DB", "id"],
@@ -43,7 +42,7 @@
       "x": [-72],
       "y": [-76],
       "color": ["NA"],
-      "comment": ["NA"]
+      "comment": ["Orphanet identifiers, definition and level information"]
     }
   },
   "Orphanet_crossId": {
@@ -78,7 +77,7 @@
         "comment": "Crossreference disease ontology id to id1"
       }
     ],
-    "primaryKey": ["DB1", "id1"],
+    "primaryKey": [],
     "foreignKeys": [
       {
         "refTable": ["Orphanet_entryId"],
@@ -98,14 +97,14 @@
     "indexes": [
       {
         "fields": ["DB1", "id1"],
-        "unique": [true]
+        "unique": [false]
       }
     ],
     "display": {
       "x": [-68],
       "y": [197],
       "color": ["NA"],
-      "comment": ["NA"]
+      "comment": ["Cross-reference table"]
     }
   },
   "Orphanet_parentId": {
@@ -147,7 +146,7 @@
         "comment": ""
       }
     ],
-    "primaryKey": ["DB", "id"],
+    "primaryKey": [],
     "foreignKeys": [
       {
         "refTable": ["Orphanet_entryId"],
@@ -185,14 +184,14 @@
       },
       {
         "fields": ["DB", "id"],
-        "unique": [true]
+        "unique": [false]
       }
     ],
     "display": {
       "x": [-216],
       "y": [-221],
       "color": ["NA"],
-      "comment": ["NA"]
+      "comment": ["Hierarchical information"]
     }
   },
   "Orphanet_idNames": {
@@ -227,7 +226,7 @@
         "comment": "Current label for the entry"
       }
     ],
-    "primaryKey": ["DB", "id"],
+    "primaryKey": [],
     "foreignKeys": [
       {
         "refTable": ["Orphanet_entryId"],
@@ -247,14 +246,14 @@
     "indexes": [
       {
         "fields": ["DB", "id"],
-        "unique": [true]
+        "unique": [false]
       }
     ],
     "display": {
       "x": [66],
       "y": [-315],
       "color": ["NA"],
-      "comment": ["NA"]
+      "comment": ["Synonyms and label"]
     }
   },
   "Orphanet_sourceFiles": {
@@ -275,8 +274,7 @@
         "comment": "Date of the current version of the source files"
       }
     ],
-    "primaryKey": ["url"],
-    "foreignKeys": {},
+    "primaryKey": [],
     "indexes": [
       {
         "fields": ["url"],
@@ -284,10 +282,10 @@
       }
     ],
     "display": {
-      "x": [315],
-      "y": [315],
+      "x": [272],
+      "y": [-218],
       "color": ["NA"],
-      "comment": ["NA"]
+      "comment": ["Source file information"]
     }
   },
   "Orphanet_EpidemiologicalDiseaseInfo": {
@@ -371,7 +369,7 @@
         "comment": ""
       }
     ],
-    "primaryKey": ["DB", "id"],
+    "primaryKey": [],
     "foreignKeys": [
       {
         "refTable": ["Orphanet_entryId"],
@@ -391,14 +389,14 @@
     "indexes": [
       {
         "fields": ["DB", "id"],
-        "unique": [true]
+        "unique": [false]
       }
     ],
     "display": {
       "x": [-315],
       "y": [56],
       "color": ["NA"],
-      "comment": ["NA"]
+      "comment": ["Epidemiological disease information"]
     }
   },
   "Orphanet_DiseaseVariants": {
@@ -454,7 +452,7 @@
         "comment": ""
       }
     ],
-    "primaryKey": ["DB", "id"],
+    "primaryKey": [],
     "foreignKeys": [
       {
         "refTable": ["Orphanet_entryId"],
@@ -474,28 +472,21 @@
     "indexes": [
       {
         "fields": ["DB", "id"],
-        "unique": [true]
+        "unique": [false]
       }
     ],
     "display": {
       "x": [203],
       "y": [-67],
       "color": ["NA"],
-      "comment": ["NA"]
+      "comment": ["Disease variant information"]
     }
   },
-  "Orphanet_HPO": {
-    "tableName": ["Orphanet_HPO"],
+  "Orphanet_HPfreq": {
+    "tableName": ["Orphanet_HPfreq"],
     "fields": [
       {
-        "name": "phenoDB",
-        "type": "character",
-        "nullable": false,
-        "unique": false,
-        "comment": "Phenotype database"
-      },
-      {
-        "name": "pheno",
+        "name": "hp",
         "type": "character",
         "nullable": false,
         "unique": false,
@@ -516,25 +507,11 @@
         "comment": "Orphanet identifier"
       },
       {
-        "name": "hpoName",
-        "type": "character",
-        "nullable": false,
-        "unique": false,
-        "comment": "Label of HPO term"
-      },
-      {
         "name": "hpoFreq",
         "type": "character",
         "nullable": false,
         "unique": false,
         "comment": "Frequency of the phenotype occurring"
-      },
-      {
-        "name": "label",
-        "type": "character",
-        "nullable": false,
-        "unique": false,
-        "comment": "Orphanet label"
       }
     ],
     "foreignKeys": [
@@ -555,10 +532,61 @@
     ],
     "indexes": {},
     "display": {
-      "x": [221],
-      "y": [116],
+      "x": [286],
+      "y": [81],
       "color": ["NA"],
-      "comment": ["Orphanet to HPO mapping"]
-    }
+      "comment": ["Orphanet to HPO mapping with frequency information"]
+    },
+    "primaryKey": []
+  },
+  "Orphanet_HP": {
+    "tableName": ["Orphanet_HP"],
+    "fields": [
+      {
+        "name": "DB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Database field"
+      },
+      {
+        "name": "id",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "disease identifier field"
+      },
+      {
+        "name": "hp",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Phenotype identifier field (HP)"
+      }
+    ],
+    "indexes": {},
+    "display": {
+      "x": [116],
+      "y": [152],
+      "color": ["NA"],
+      "comment": ["Orphanet to phenotype"]
+    },
+    "foreignKeys": [
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "DB",
+            "to": "DB"
+          },
+          {
+            "from": "id",
+            "to": "id"
+          }
+        ],
+        "cardinality": [0, -1, 1, 1]
+      }
+    ],
+    "primaryKey": []
   }
 }

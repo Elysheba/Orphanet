@@ -21,8 +21,9 @@ ddir <- "./data"
 ###############################################################################@
 ## Data model ----
 ###############################################################################@
-# dm <- model_relational_data()
-# save(dm, file = here("model", "Orphanet.rda"))
+load(here("model", "Orphanet.rda"))
+dm <- model_relational_data(dm)
+save(dm, file = here("model", "Orphanet.rda"))
 
 ###############################################################################@
 ## Source information ----
@@ -38,11 +39,6 @@ sfi_name <- unlist(lapply(
   }
 ))
 
-###############################################################################@
-## Data model
-###############################################################################@
-# dm <- model_relational_data()
-# save(dm, file = here("model", "Orphanet.rda"))
 
 ###############################################################################@
 ## Data from ordo_orphanet_owl
@@ -50,9 +46,9 @@ sfi_name <- unlist(lapply(
 ## Convert OWL to JSON
 # Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
 
-# system(paste("robot convert --input ",
-#              file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl"),
-#              " --output ",file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/ORDO_en_2.9.json"), sep = ""))
+system(paste("robot convert --input ",
+             file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl"),
+             " --output ",file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/ORDO_en_2.9.json"), sep = ""))
 
 # readJson <- jsonlite::fromJSON(txt = "../sources/orphanet/Disorders cross referenced JSON/en_product1.json")
 readJson <- jsonlite::fromJSON(txt = here("sources/ORDO_en_2.9.json"))

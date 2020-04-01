@@ -104,6 +104,15 @@ orParse <- do.call(
 message(Sys.time())
 message("... Done \n")
 
+## Some Ids have no prevalence information and are not in the ontology --> remove
+orpha <- read.table(here("data", "Orphanet_entryId.txt"),header = TRUE, sep = "\t",
+                    quote = '"', comment.char = "", colClasses= c("character"))
+
+orParse <- orParse %>%
+  filter(id %in% orpha$id) ## 03022020 64 entries were missing, these IDs were not present in the raw orphanet.json file either
+message(Sys.time())
+message("... Done \n")
+
 ###############################################################################@
 ## Writing file
 write.table(

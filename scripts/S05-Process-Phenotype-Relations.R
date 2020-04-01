@@ -93,16 +93,38 @@ orParse <- do.call(
            },
            BPPARAM = bpparam)
 )
+## Some Ids have no prevalence information and are not in the ontology --> remove
+orpha <- read.table(here("data", "Orphanet_entryId.txt"),header = TRUE, sep = "\t",
+                    quote = '"', comment.char = "", colClasses= c("character"))
+orParse <- orParse %>%
+  filter(id %in% orpha$id) ## 03022020 64 entries were missing, these IDs were not present in the raw orphanet.json file either
+Orphanet_HPfreq <- orParse %>%
+  select(DB, id, hp = pheno, 
+         hpoFreq)
+Orphanet_HP <- orParse %>%
+  select(DB, id, hp = pheno)
+
 message(Sys.time())
 message("... Done \n")
 
 ###############################################################################@
 ## Writing file
-write.table(
-  orParse,
-  file= here("data","Orphanet_HPO.txt"),
-  sep="\t",
-  row.names=FALSE, col.names=TRUE,
-  quote=TRUE,
-  qmethod = "double"
-)
+toSave <- grep("^Orphanet_",ls(),value = T)
+for(f in toSave){
+  message(paste("Saving", f))
+  print(here("data", paste(f, ".txt", sep="")))
+  ## Ensure unicity
+  assign(f, get(f))
+  if(length(names(f))==0){
+    f <- unique(f)
+  }
+  ##
+  write.table(
+    get(f),
+    file=here("data", paste(f, ".txt", sep="")),
+    sep="\t",
+    row.names=FALSE, col.names=TRUE,
+    quote=TRUE,
+    qmethod = "double"
+  )
+}
