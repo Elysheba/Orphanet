@@ -43,7 +43,8 @@
       "y": [-76],
       "color": ["NA"],
       "comment": ["Orphanet identifiers, definition and level information"]
-    }
+    },
+    "foreignKeys": []
   },
   "Orphanet_crossId": {
     "tableName": ["Orphanet_crossId"],
@@ -263,7 +264,7 @@
         "name": "url",
         "type": "character",
         "nullable": false,
-        "unique": true,
+        "unique": false,
         "comment": "URL location of source files"
       },
       {
@@ -272,21 +273,24 @@
         "nullable": false,
         "unique": false,
         "comment": "Date of the current version of the source files"
+      },
+      {
+        "name": "name",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Name source file"
       }
     ],
     "primaryKey": [],
-    "indexes": [
-      {
-        "fields": ["url"],
-        "unique": [true]
-      }
-    ],
+    "indexes": [],
     "display": {
       "x": [272],
       "y": [-218],
       "color": ["NA"],
       "comment": ["Source file information"]
-    }
+    },
+    "foreignKeys": []
   },
   "Orphanet_EpidemiologicalDiseaseInfo": {
     "tableName": ["Orphanet_EpidemiologicalDiseaseInfo"],

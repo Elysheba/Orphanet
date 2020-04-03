@@ -22,7 +22,7 @@ ddir <- "./data"
 ## Data model ----
 ###############################################################################@
 load(here("model", "Orphanet.rda"))
-dm <- model_relational_data(dm)
+# dm <- model_relational_data()
 save(dm, file = here("model", "Orphanet.rda"))
 
 ###############################################################################@
@@ -45,10 +45,12 @@ sfi_name <- unlist(lapply(
 ###############################################################################@
 ## Convert OWL to JSON
 # Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
-
-system(paste("robot convert --input ",
-             file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl"),
-             " --output ",file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/ORDO_en_2.9.json"), sep = ""))
+# unzip(zipfile = file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl.zip"))
+# system(paste("unzip -d /home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ ", 
+#              file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl.zip")))
+# system(paste("robot convert --input ",
+#              file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ordo_orphanet.owl"),
+#              " --output ",file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/ORDO_en_2.9.json"), sep = ""))
 
 # readJson <- jsonlite::fromJSON(txt = "../sources/orphanet/Disorders cross referenced JSON/en_product1.json")
 readJson <- jsonlite::fromJSON(txt = here("sources/ORDO_en_2.9.json"))

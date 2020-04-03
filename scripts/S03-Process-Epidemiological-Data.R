@@ -12,6 +12,8 @@ library(tidyverse)
 # source(here("scripts/clinVar-Functions.R"))
 
 ##
+rm(list = ls())
+gc()
 bpparam <- MulticoreParam(30)
 sdir <- here("sources")
 ddir <- here("data")

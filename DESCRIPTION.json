@@ -4,9 +4,10 @@
 	"description": "Orphanet is the reference portal for information on rare diseases and orphan drugs, for all audiences. The aim is to help improve the diagnosis, care and treatment of patients with rare diseases.",
 	"reference URL": "http://www.orphadata.org/",
 	"version": "0.2",
+	"maintainer":"Liesbeth François <liesbeth.francois@ucb.com>",
 	"source files": [
 	    	{
-			"name":"Orphanet Rare Disease Ontology/en_product1.json",
+			"name":"Orphanet Rare Disease Ontology/ORDO_en_2.9.owl",
 			"URL template":"https://github.com/Orphanet/Orphadata.org",
 			"remote update frequency": {
 				"value": 0,
@@ -14,15 +15,7 @@
 			}
 		},
 	    {
-			"name":"ORDO_releaseNotes2.5.txt",
-			"URL template":"http://www.orphadata.org/data/ORDO/ORDO_releaseNotes2.5.txt",
-			"remote update frequency": {
-				"value": 0,
-				"units": "1/day"
-			}
-		},
-	    {
-			"name":"EpidemiologicalData_Orphanet.xml",
+			"name":"ORDO_releaseNotes_2.9_en.txt",
 			"URL template":"https://github.com/Orphanet/Orphadata.org",
 			"remote update frequency": {
 				"value": 0,
@@ -30,13 +23,29 @@
 			}
 		},
 	    {
-			"name":"DiseaseVariants_Orphanet.xml",
+			"name":"Epidemiological data/Rare disease epidemiology/en_product9_prev.xml",
 			"URL template":"https://github.com/Orphanet/Orphadata.org",
 			"remote update frequency": {
 				"value": 0,
 				"units": "1/day"
 			}
-		}			
+		},
+	    {
+			"name":"Disorders with their associated genes/en_product6.xml",
+			"URL template":"https://github.com/Orphanet/Orphadata.org",
+			"remote update frequency": {
+				"value": 0,
+				"units": "1/day"
+			}
+		},
+		{
+			"name":"Phenotypes associated with rare disorders/en_product4_HPO.xml",
+			"URL template": "https://github.com/Orphanet/Orphadata.org",
+			"remote update frequency": {
+				"value": 0,
+				"units": "1/day"
+			}
+		}
 	]
 
 }

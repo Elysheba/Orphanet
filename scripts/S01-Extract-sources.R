@@ -22,6 +22,14 @@ urls <- unlist(lapply(
 ))
 srcDir <- "../sources/orphanet"
 
+sfi_name <- unlist(lapply(
+  sourceFiles,
+  function(sf){
+    toRet <- sf$"name"
+    return(toRet)
+  }
+))
+
 # gitRepo <- urls[1]
 # 
 # ## Clone or pull git repository
@@ -41,28 +49,23 @@ srcDir <- "../sources/orphanet"
 ###############################################################################@
 ## Source information ----
 ###############################################################################@
-desc <- RJSONIO::readJSONStream("../DESCRIPTION.json")
-
-sourceFiles <- desc$"source files"
-sfi_name <- unlist(lapply(
-  sourceFiles,
-  function(sf){
-    toRet <- sf$"name"
-    return(toRet)
-  }
-))
-
 # unzip(zipfile = file.path(srcDir,sfi_name[[1]]),
 #       exdir = file.path(srcDir,"ordo_orphanet.owl"),
 #       overwrite = TRUE)
 
 ###############################################
 ## Information source files
-rcurrent <- git2r::odb_blobs(gitRepo)
-rcurrent <- tail(rcurrent[rcurrent$name == "en_product1.json",], n = 1L)
+# rcurrent <- git2r::odb_blobs(gitRepo)
+# rcurrent <- tail(rcurrent[rcurrent$name == "en_product1.json",], n = 1L)
+# 
+# Orphanet_sourceFiles <- data.frame(url = urls[1],
+#                                   current = rcurrent$when) %>%
+#   mutate_all(as.character())
+lf <- grep(paste(sfi_name, collapse = "|"),  list.files(srcDir, full.names = TRUE, recursive = T), value = T)
 
-Orphanet_sourceFiles <- data.frame(url = urls[1],
-                                  current = rcurrent$when) %>%
+Orphanet_sourceFiles <- data.frame(name = sfi_name,
+                                   url = urls,
+                                   current = file.info(lf)$mtime) %>%
   mutate_all(as.character())
 
 ###############################################
