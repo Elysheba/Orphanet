@@ -44,16 +44,16 @@ sfi_name <- unlist(lapply(
 ## Data from ordo_orphanet_owl
 ###############################################################################@
 ## Convert OWL to JSON
-# Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
+Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
 # unzip(zipfile = file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl.zip"))
-# system(paste("unzip -d /home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ ", 
+# system(paste("unzip -d /home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ ",
 #              file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl.zip")))
-# system(paste("robot convert --input ",
-#              file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ordo_orphanet.owl"),
-#              " --output ",file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/ORDO_en_2.9.json"), sep = ""))
+system(paste("robot convert --input ",
+             file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Ontologies/ORDO/ordo_orphanet.owl"),
+             " --output ",file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/ordo_orphanet.json"), sep = ""))
 
 # readJson <- jsonlite::fromJSON(txt = "../sources/orphanet/Disorders cross referenced JSON/en_product1.json")
-readJson <- jsonlite::fromJSON(txt = here("sources/ORDO_en_2.9.json"))
+readJson <- jsonlite::fromJSON(txt = here("sources/ordo_orphanet.json"))
 
 # propJson <- do.call(rbind,
 #                     lapply(1:nrow(readJson$graphs$nodes[[1]]),

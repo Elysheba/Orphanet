@@ -54,7 +54,7 @@ readOrpha <- function(file, n=-1L){
 ## _+ Loading and parsing XML ----
 message("Loading XML...")
 message(Sys.time())
-xmlFile <- file.path(sdir, "orphanet/Disorders with their associated genes/en_product6.xml")
+xmlFile <- file.path(sdir, "orphanet/Genes associated with rare diseases/en_product6.xml")
 geneList <- readOrpha(xmlFile) #, n=100000) # total: >37210660
 encoding <- attr(geneList, "encoding")
 message(Sys.time())

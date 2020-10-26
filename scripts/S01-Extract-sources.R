@@ -30,15 +30,15 @@ sfi_name <- unlist(lapply(
   }
 ))
 
-# gitRepo <- urls[1]
-# 
-# ## Clone or pull git repository
-# if(!dir.exists(srcDir)){
-#   gitRepo <- git2r::clone(url = gitRepo, local_path = srcDir)
-# }else{
-#   gitRepo <- git2r::repository(srcDir)
-#   git2r::pull(gitRepo)
-# }
+gitRepo <- urls[1]
+
+## Clone or pull git repository
+if(!dir.exists(srcDir)){
+  gitRepo <- git2r::clone(url = gitRepo, local_path = srcDir)
+}else{
+  gitRepo <- git2r::repository(srcDir)
+  git2r::checkout(gitRepo, branch = "master", force = TRUE)
+}
 
 # downloadSourceFiles(urls, srcDir)
 # if(!file.exists("../sources/ordo_orphanet.owl")){

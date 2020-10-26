@@ -3,7 +3,7 @@
 	"title": "Data extracted from the Orphanet database",
 	"description": "Orphanet is the reference portal for information on rare diseases and orphan drugs, for all audiences. The aim is to help improve the diagnosis, care and treatment of patients with rare diseases.",
 	"reference URL": "http://www.orphadata.org/",
-	"version": "0.2",
+	"version": "0.3",
 	"maintainer":"Liesbeth François <liesbeth.francois@ucb.com>",
 	"source files": [
 	    	{
