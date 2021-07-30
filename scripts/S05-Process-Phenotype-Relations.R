@@ -67,7 +67,7 @@ orParse <- do.call(
   bplapply(hpoList,
            function(or){
              orpa <- xmlRoot(xmlParse(or, encoding = encoding))
-             orphaNb <- xmlValue(orpa[["OrphaNumber"]])
+             orphaNb <- xmlValue(orpa[["OrphaCode"]])
              orphaName <- xmlValue(orpa[["Name"]])
              # nbPrev <- as.integer(xmlAttrs(a[["PrevalenceList"]]))
              prevList <- do.call(
@@ -96,13 +96,17 @@ orParse <- do.call(
 ## Some Ids have no prevalence information and are not in the ontology --> remove
 orpha <- read.table(here("data", "Orphanet_entryId.txt"),header = TRUE, sep = "\t",
                     quote = '"', comment.char = "", colClasses= c("character"))
+dim(orParse)
 orParse <- orParse %>%
   filter(id %in% orpha$id) ## 03022020 64 entries were missing, these IDs were not present in the raw orphanet.json file either
+dim(orParse)
 Orphanet_HPfreq <- orParse %>%
   select(DB, id, hp = pheno, 
-         hpoFreq)
+         hpoFreq) %>%
+  filter(!is.na(hp))
 Orphanet_HP <- orParse %>%
-  select(DB, id, hp = pheno)
+  select(DB, id, hp = pheno) %>%
+  filter(!is.na(hp))
 
 message(Sys.time())
 message("... Done \n")

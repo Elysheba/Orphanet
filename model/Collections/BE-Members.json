@@ -1,4 +1,6 @@
 {
+	"$schema":"TKCat_BE_collection_1.0",
+	"$id":"Orphanet_BE_1.0", 
 	"collection":"BE",
 	"resource":"Orphanet",
 	"tables":[

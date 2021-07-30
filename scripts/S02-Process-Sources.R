@@ -14,16 +14,16 @@ library(dplyr)
 # source(here("..","00-Utils/writeLastUpdate.R"))
 library(ReDaMoR)
 ##
-mc.cores <- 55
-sdir <- "./sources"
-ddir <- "./data"
+mc.cores <- 20
+sdir <- here("/sources")
+ddir <- here("/data")
 
 ###############################################################################@
 ## Data model ----
 ###############################################################################@
 load(here("model", "Orphanet.rda"))
 # dm <- model_relational_data()
-save(dm, file = here("model", "Orphanet.rda"))
+# save(dm, file = here("model", "Orphanet.rda"))
 
 ###############################################################################@
 ## Source information ----
@@ -44,13 +44,13 @@ sfi_name <- unlist(lapply(
 ## Data from ordo_orphanet_owl
 ###############################################################################@
 ## Convert OWL to JSON
-Sys.setenv(PATH = paste(Sys.getenv("PATH"),"~/Shared/Data-Science/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
+Sys.setenv(PATH = paste(Sys.getenv("PATH"),"/data/lfrancois/Development/Data-Source-Model-Repository/00-Utils/bin/",sep = ":"))
 # unzip(zipfile = file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl.zip"))
 # system(paste("unzip -d /home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ ",
 #              file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Rare\\ Disease\\ Ontology/ORDO_en_2.9.owl.zip")))
 system(paste("robot convert --input ",
-             file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Ontologies/ORDO/ordo_orphanet.owl"),
-             " --output ",file.path("/home/lfrancois/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/sources/ordo_orphanet.json"), sep = ""))
+             file.path("/data/lfrancois/Development/Data-Source-Model-Repository/Orphanet/sources/orphanet/Orphanet\\ Ontologies/ORDO/ordo_orphanet.owl"),
+             " --output ",file.path("/data/lfrancois/Development/Data-Source-Model-Repository/Orphanet/sources/ordo_orphanet.json"), sep = ""))
 
 # readJson <- jsonlite::fromJSON(txt = "../sources/orphanet/Disorders cross referenced JSON/en_product1.json")
 readJson <- jsonlite::fromJSON(txt = here("sources/ordo_orphanet.json"))
@@ -78,7 +78,7 @@ readJson <- jsonlite::fromJSON(txt = here("sources/ordo_orphanet.json"))
 nodesJson <- plyr::compact(
   lapply(1:nrow(readJson$graphs$nodes[[1]]),
                     function(i){
-                      print(i)
+                      # print(i)
                       id <- paste("ORPHA",
                                   gsub(".*Orphanet_", "", readJson$graphs$nodes[[1]]$id[i]),
                                   sep = ":") 
@@ -147,6 +147,7 @@ syn <- do.call(rbind,lapply(nodesJson,function(x) x$syn))
 ## edges (parents)
 edgesJson <- readJson$graphs$edges[[1]]
 ##
+## gene to disease information
 functMut <- edgesJson[grepl(paste("Orphanet_465410", 
                                   "Orphanet_410296",
                                   "Orphanet_410295",

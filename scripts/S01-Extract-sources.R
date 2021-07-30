@@ -1,15 +1,14 @@
-setwd("~/Shared/Data-Science/Data-Source-Model-Repository/Orphanet/scripts/")
-
 ####################################
 library(RJSONIO)
-source("../../00-Utils/downloadSourceFiles.R")
+library(here)
+source(here("../00-Utils/downloadSourceFiles.R"))
 library(tibble)
 library(dplyr)
 
 
 ############################
 ## JSON file
-desc <- readJSONStream("../DESCRIPTION.json")
+desc <- readJSONStream(here("DESCRIPTION.json"))
 
 sourceFiles <- desc$"source files"
 urls <- unlist(lapply(
@@ -20,7 +19,7 @@ urls <- unlist(lapply(
     return(toRet)
   }
 ))
-srcDir <- "../sources/orphanet"
+srcDir <- here("sources/orphanet")
 
 sfi_name <- unlist(lapply(
   sourceFiles,
@@ -33,14 +32,15 @@ sfi_name <- unlist(lapply(
 gitRepo <- urls[1]
 
 ## Clone or pull git repository
+
 if(!dir.exists(srcDir)){
   gitRepo <- git2r::clone(url = gitRepo, local_path = srcDir)
 }else{
-  gitRepo <- git2r::repository(srcDir)
-  git2r::checkout(gitRepo, branch = "master", force = TRUE)
+  system(paste("rm ", srcDir))
+  gitRepo <- git2r::clone(url = gitRepo, local_path = srcDir)
 }
 
-# downloadSourceFiles(urls, srcDir)
+# downloadSourceFiles(urls[1], srcDir)
 # if(!file.exists("../sources/ordo_orphanet.owl")){
 #   unzip(zipfile = file.path(srcDir,"ordo_orphanet.owl.zip"), exdir = srcDir, overwrite = TRUE)
 # }
@@ -71,9 +71,10 @@ Orphanet_sourceFiles <- data.frame(name = sfi_name,
 ###############################################
 ## Writing files
 toSave <- grep("^Orphanet[_]", ls(), value = T)
-ddir <- "../data"
+ddir <- here("data")
 
-write.table(get(toSave), row.names = FALSE, sep = "\t", quote = FALSE, file=file.path(ddir, paste(toSave, ".txt", sep="")))
+write.table(get(toSave), row.names = FALSE, sep = "\t", quote = FALSE, 
+            file=file.path(ddir, paste(toSave, ".txt", sep="")))
 
 # write.table(Orphanet_sourceFiles, file=file.path(ddir, paste(toSave, ".txt", sep="")), sep = "\t")
 

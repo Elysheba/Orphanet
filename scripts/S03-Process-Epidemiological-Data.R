@@ -66,7 +66,7 @@ orParse <- do.call(
   bplapply(orList,
            function(or){
              orpa <- xmlRoot(xmlParse(or, encoding = encoding))
-             orphaNb <- xmlValue(orpa[["OrphaNumber"]])
+             orphaNb <- xmlValue(orpa[["OrphaCode"]])
              orphaName <- xmlValue(orpa[["Name"]])
              disType <- xmlValue(orpa[["DisorderType"]][["Name"]])
              # nbPrev <- as.integer(xmlAttrs(a[["PrevalenceList"]]))

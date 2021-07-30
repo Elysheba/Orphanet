@@ -1,10 +1,16 @@
 {
+	"$schema":"TKCat_Condition_collection_1.0",
+	"$id":"ICD11_conditions_1.0",
 	"collection":"Condition",
 	"resource":"Orphanet",
 	"tables":[
 		{
 			"name":"Orphanet_entryId",
 			"fields":{
+				"condition": {
+					"static":true,
+					"value":"Disease"
+				},
 				"source": {
 					"static":false,
 					"value":"DB"
