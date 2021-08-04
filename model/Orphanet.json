@@ -189,8 +189,8 @@
       }
     ],
     "display": {
-      "x": [-216],
-      "y": [-221],
+      "x": [-308],
+      "y": [-209],
       "color": ["NA"],
       "comment": ["Hierarchical information"]
     }
@@ -592,5 +592,75 @@
       }
     ],
     "primaryKey": []
+  },
+  "Orphanet_ancestors": {
+    "tableName": ["Orphanet_ancestors"],
+    "fields": [
+      {
+        "name": "id",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Orphanet identifier"
+      },
+      {
+        "name": "ancestor",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Orphanet identifier of ancestors"
+      },
+      {
+        "name": "DB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "Database"
+      },
+      {
+        "name": "aDB",
+        "type": "character",
+        "nullable": false,
+        "unique": false,
+        "comment": "ancestor DB"
+      }
+    ],
+    "foreignKeys": [
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "id",
+            "to": "id"
+          },
+          {
+            "from": "DB",
+            "to": "DB"
+          }
+        ],
+        "cardinality": [0, -1, 0, 1]
+      },
+      {
+        "refTable": ["Orphanet_entryId"],
+        "key": [
+          {
+            "from": "aDB",
+            "to": "DB"
+          },
+          {
+            "from": "ancestor",
+            "to": "id"
+          }
+        ],
+        "cardinality": [0, -1, 0, 1]
+      }
+    ],
+    "indexes": {},
+    "display": {
+      "x": [-132],
+      "y": [-341],
+      "color": ["NA"],
+      "comment": ["Orphanet id - ancestor information"]
+    }
   }
 }

@@ -22,7 +22,7 @@ ddir <- here("/data")
 ## Data model ----
 ###############################################################################@
 load(here("model", "Orphanet.rda"))
-# dm <- model_relational_data()
+# dm <- model_relational_data(dm)
 # save(dm, file = here("model", "Orphanet.rda"))
 
 ###############################################################################@
@@ -408,6 +408,13 @@ Orphanet_crossId <- crossId[,c("DB1","id1","DB2","id2")]
 Orphanet_entryId <- entryId[,c("DB","id","def","level")]
 Orphanet_idNames <- idNames[,c("DB","id","syn","canonical")]
 Orphanet_parentId <- parentId[c("DB","id","pDB","parent","origin")]
+Orphanet_ancestors <- stack(lapply(termAncestors, 
+                               function(x){x$parents})) %>% 
+  mutate_all(as.character()) %>% 
+  rename(id = ind,
+         ancestor = values) %>% 
+  mutate(DB = "Orphanet",
+         aDB = "Orphanet")
 
 ######################################
 ## Writing tables
