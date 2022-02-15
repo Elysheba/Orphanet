@@ -22,7 +22,7 @@ ddir <- here("/data")
 ## Data model ----
 ###############################################################################@
 load(here("model", "Orphanet.rda"))
-# dm <- model_relational_data(dm)
+dm <- model_relational_data()
 # save(dm, file = here("model", "Orphanet.rda"))
 
 ###############################################################################@
